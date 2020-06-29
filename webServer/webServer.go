@@ -60,6 +60,7 @@ func Serve() {
 	r.HandleFunc("/request-template-form-reorder", requestTemplateFormReorder).Methods("POST")
 	r.HandleFunc("/requests", requests).Methods("GET")
 	r.HandleFunc("/reorder", reorder).Methods("POST")
+	r.HandleFunc("/api/v1/requests/list", requestsList).Methods("GET")
 
 	srv := &http.Server{
 		Addr: "0.0.0.0:8080",
@@ -294,33 +295,15 @@ func shopList(w http.ResponseWriter, r *http.Request) {
 	if !activeSession {
 		return
 	}
-	type Data struct {
-		Data []model.Survey
-	}
-	var dataList Data
+	var data []model.Survey
 	var err error
-	dataList.Data, err = mongoConnector.DBGetJobTemplateAll()
+	data, err = mongoConnector.DBGetJobTemplateAll()
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// Construt json response
-	jsonData, err := json.Marshal(dataList)
-	if err != nil {
-		log.Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	// Write json response
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
-	if err != nil {
-		log.Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
+	helper.JsonResponse(w, data)
 }
 
 func requestTemplateForm(w http.ResponseWriter, r *http.Request) {
@@ -490,22 +473,7 @@ func cartList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// Construt json response
-	jsonData, err := json.Marshal(cart)
-	if err != nil {
-		log.Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	// Write json response
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
-	if err != nil {
-		log.Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
+	helper.JsonResponse(w, cart)
 }
 
 func cartAdd(w http.ResponseWriter, r *http.Request) {
@@ -677,7 +645,7 @@ func requests(w http.ResponseWriter, r *http.Request) {
 	if !activeSession {
 		return
 	}
-	// Get the user's cart
+	// Get the requests
 	userID := getUserID(r)
 	requests, err := mongoConnector.DBGetRequests(userID)
 	if err != nil {

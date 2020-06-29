@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -86,4 +87,24 @@ func DownloadIcon(id string, link string) (err error, icon string) {
 	log.Infof("Downloaded icon %s with size %s", fileName, strconv.FormatInt(int64(size), 10))
 
 	return err, strings.Replace(fileName, "www/", "", -1)
+}
+
+func JsonResponse(w http.ResponseWriter, data interface{}) {
+	// Construt json response
+	log.Debug("Constructing json response")
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Write json response
+	log.Debug("Sending json response")
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

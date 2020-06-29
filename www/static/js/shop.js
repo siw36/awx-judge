@@ -21,7 +21,7 @@ function loadShopItems() {
     // Update table
     $(function() {
       if ('content' in document.createElement('template')) {
-        $.each(response.Data, function(i, item) {
+        $.each(response, function(i, item) {
           var t = document.querySelector('#shop_card_template'),
           // Setting all requeired elements
           card_icon = t.content.querySelector('#card_icon');
