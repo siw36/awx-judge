@@ -31,31 +31,35 @@ var cookieHandler = securecookie.New(
 
 func Serve() {
 	r := mux.NewRouter()
-	// Staic files
+	// Staic
 	fsStatic := http.FileServer(http.Dir("www/static"))
 	fsLogos := http.FileServer(http.Dir("/tmp"))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fsStatic))
 	r.PathPrefix("/icons/").Handler(http.StripPrefix("/tmp/icons/", fsLogos))
-
-	// Templated
+	// Login
 	r.HandleFunc("/login", loginForm).Methods("GET")
 	r.HandleFunc("/login-internal", loginInternal).Methods("POST")
 	r.HandleFunc("/logout", logout).Methods("GET")
+	// Shop
+	r.HandleFunc("/shop", shop)
+	r.HandleFunc("/api/v1/shop/list", shopList).Methods("GET")
+	// Import
 	r.HandleFunc("/templates", templates)
-	r.HandleFunc("/request-template-form", requestTemplateForm).Methods("POST")
-	r.HandleFunc("/request-template-form-edit", requestTemplateFormEdit).Methods("POST")
-	r.HandleFunc("/request-template-form-reorder", requestTemplateFormReorder).Methods("POST")
+	r.HandleFunc("/import-template-form", importTemplateForm)
+	r.HandleFunc("/import-template", importTemplate)
+	// Cart
 	r.HandleFunc("/cart", cart).Methods("GET")
 	r.HandleFunc("/api/v1/cart/list", cartList).Methods("GET")
 	r.HandleFunc("/cart-add", cartAdd).Methods("POST")
 	r.HandleFunc("/api/v1/cart/remove", cartRemove).Methods("POST")
 	r.HandleFunc("/cart-edit", cartEdit).Methods("POST")
 	r.HandleFunc("/cart-to-request", cartToRequest).Methods("POST")
+	// Request
+	r.HandleFunc("/request-template-form", requestTemplateForm).Methods("POST")
+	r.HandleFunc("/request-template-form-edit", requestTemplateFormEdit).Methods("POST")
+	r.HandleFunc("/request-template-form-reorder", requestTemplateFormReorder).Methods("POST")
 	r.HandleFunc("/requests", requests).Methods("GET")
 	r.HandleFunc("/reorder", reorder).Methods("POST")
-	r.HandleFunc("/import-template-form", importTemplateForm)
-	r.HandleFunc("/import-template", importTemplate)
-	r.HandleFunc("/shop", shop)
 
 	srv := &http.Server{
 		Addr: "0.0.0.0:8080",
@@ -69,7 +73,7 @@ func Serve() {
 	// Run our server in a goroutine so that it doesn't block.
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
 	}()
 
@@ -90,7 +94,7 @@ func Serve() {
 	// Optionally, you could run srv.Shutdown in a goroutine and block on
 	// <-ctx.Done() if your application should wait for other services
 	// to finalize based on context cancellation.
-	log.Println("Shutting down server gracefully")
+	log.Info("Shutting down server gracefully")
 	// Disconnect from DB
 	mongoConnector.DBDisconnect(mongoConnector.Client)
 	os.Exit(0)
@@ -267,11 +271,6 @@ func shop(w http.ResponseWriter, r *http.Request) {
 	if !activeSession {
 		return
 	}
-	type Data struct {
-		Data []model.Survey
-	}
-	var dataList Data
-	dataList.Data, _ = mongoConnector.DBGetJobTemplateAll()
 
 	// Render template
 	//t := template.New("shop")
@@ -282,12 +281,46 @@ func shop(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Serve site
-	err = t.Execute(w, dataList)
+	err = t.Execute(w, nil)
 	if err != nil {
 		log.Error(err)
 	} else {
 		log.Info("Parsed www/shop.gohtml")
 	}
+}
+
+func shopList(w http.ResponseWriter, r *http.Request) {
+	activeSession := securePageHandler(w, r)
+	if !activeSession {
+		return
+	}
+	type Data struct {
+		Data []model.Survey
+	}
+	var dataList Data
+	var err error
+	dataList.Data, err = mongoConnector.DBGetJobTemplateAll()
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Construt json response
+	jsonData, err := json.Marshal(dataList)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Write json response
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 }
 
 func requestTemplateForm(w http.ResponseWriter, r *http.Request) {
@@ -429,24 +462,14 @@ func cart(w http.ResponseWriter, r *http.Request) {
 	if !activeSession {
 		return
 	}
-	// Get the user's cart
-	userID := getUserID(r)
-	cart, err := mongoConnector.DBGetCart(userID)
-	if err != nil {
-		log.Error(err)
-		return
-	}
 	// Render template
 	t, err := templateLayout("www/cart.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
 	}
-
-	// Render aditional identity providers (OIDC) into this template
-
 	// Serve site
-	err = t.Execute(w, cart)
+	err = t.Execute(w, nil)
 	if err != nil {
 		log.Error(err)
 	} else {

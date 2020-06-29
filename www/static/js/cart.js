@@ -9,7 +9,6 @@ function deleteItem(obj){
   }
   // Setup variables
   var id = $(obj).data("request_id")
-  console.log(id)
   var data = new Object;
   data["id"] = id
   var json_data = JSON.stringify(data)
@@ -72,16 +71,16 @@ function loadTable() {
     $(function() {
       if ('content' in document.createElement('template')) {
         $.each(response.requests, function(i, item) {
-          var t = document.querySelector('#table-row-template'),
+          var t = document.querySelector('#cart_item_template'),
           tr = t.content.querySelector('tr');
           tr.setAttribute("id", item.id);
           td = t.content.querySelectorAll('td');
           td[0].querySelector('img').src = item.survey.icon;
           td[1].textContent = item.survey.name;
           td[2].textContent = item.request_reason;
-          button_edit = td[3].querySelector('#button-edit');
+          button_edit = td[3].querySelector('#cart_button_edit');
           button_edit.setAttribute('data-request_id', item.id);
-          button_delete = td[3].querySelector('#button-delete')
+          button_delete = td[3].querySelector('#cart_button_delete')
           button_delete.setAttribute('data-request_id', item.id);
           button_delete.setAttribute ('onclick', 'deleteItem(this)');
 

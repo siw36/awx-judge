@@ -17,3 +17,7 @@ Deps:
   - Render only the plain template without data
   - Provide data like cart items or requests by API
   - Use jQuery to get the data from an API and populate the HTML
+
+# Notifications
+- Email (only when set in config file, otherwise disabled)
+- Slack " (write to channel or DM)
