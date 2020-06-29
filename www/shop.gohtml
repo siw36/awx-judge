@@ -1,0 +1,40 @@
+<html>
+  <head>
+  	{{ template "sources.gohtml" }}
+  </head>
+  <body class="d-flex flex-column h-100">
+    <header>
+      {{ template "header.gohtml" }}
+    </header>
+
+    <main class="container" role="main">
+      <div class="container page-name">
+        <h1>Available services</h1>
+      </div>
+      <div class="card-columns">
+  			{{ range .Data }}
+  			<div class="card" style="width: 18rem;">
+          <div class="card-icon">
+            {{ if eq .Icon "" }}
+            <img src="/static/logo.png" class="img-fluid" alt="icon">
+            {{ else }}
+            <img src="{{ .Icon }}" class="img-fluid" alt="icon">
+            {{ end }}
+          </div>
+  			  <div class="card-body">
+  					<h5 class="card-title">{{ .Name }}</h5>
+  			    <p class="card-text">{{ .Description }}</p>
+  					<form action="/request-template-form" method="POST">
+  						<input name="id" value="{{ .ID }}" style="display:none;" readonly="true"></input>
+  						<button class="btn btn-primary" type="submit">Add to cart</button>
+  					</form>
+  			  </div>
+  			</div>
+  			{{end}}
+      </div>
+    </main>
+
+  <footer class="footer mt-auto py-3">
+    {{ template "footer.gohtml" }}
+  </footer>
+</html>

@@ -1,0 +1,62 @@
+.page-name {
+  margin: 20px 0 20px 0;
+  background-color: #e9ecef;
+  border-radius: .3rem;
+  padding: 1rem 1rem;
+}
+
+.card-icon {
+  height: 150px;
+  width: 100%;
+  padding: 1.25rem;
+}
+
+.card-icon>img {
+  max-width: 100%;
+  max-height: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+.cart-icon {
+  height: 60px;
+  width: auto;
+  padding: 0.25rem;
+}
+
+.cart-icon>img {
+  max-width: 100%;
+  max-height: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+td>img {
+  margin: 0 auto;
+}
+
+.table-align-middle td {
+  vertical-align: middle !important;
+}
+
+/* .table {
+    table-layout: fixed;
+} */
+
+.form-inline-buttons {
+  float: left;
+  height: 100%;
+  padding: 10px;
+  vertical-align: middle;
+}
+
+.form-inline-block {
+  width: 100%;
+  display: inline-block;
+}
+
+.form-inline-block button {
+  vertical-align: middle;
+}

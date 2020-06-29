@@ -1,0 +1,67 @@
+<html>
+  <head>
+  	{{ template "sources.gohtml" }}
+  </head>
+  <body class="d-flex flex-column h-100">
+    <header>
+      {{ template "header.gohtml" }}
+    </header>
+
+    <main class="container" role="main">
+      <div class="container page-name">
+        <h1>Cart</h1>
+      </div>
+
+      {{ if .Requests }}
+		  <table class="table table-striped table-hover table-align-middle">
+        <tbody>
+		    {{ range .Requests }}
+  		    <tr id="{{ .ID }}">
+            <td>
+              <div class="cart-icon">
+                <img src="{{ .Survey.Icon }}" class="img-fluid" alt="icon">
+              </div>
+            </td>
+  		      <td class="text-truncate">{{ .Survey.Name }}</td>
+  		      <td class="text-truncate" style="max-width:150px;">{{ .RequestReason }}</td>
+            <td class="text-center">
+              <!--<button class="btn btn-primary" data-toggle="modal" data-target="#modal-{{ .ID }}" title="Show survey parameters"><i class="fa fa-eye"></i></button>-->
+              <button type="submit" id="button-edit-{{ .ID }}" data-request_id="{{ .ID }}" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Edit item"><i class="fas fa-edit"></i></button>
+              <button type="submit" id="button-delete-{{ .ID }}" data-request_id="{{ .ID }}" class="btn btn-danger" data-toggle="tooltip" data-placement="bottom" title="Delete item"><i class="far fa-trash-alt"></i></button>
+  		      </td>
+  		    </tr>
+          <!--
+          <div class="modal" id="modal-{{ .ID }}" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Survey parameters</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <p>Modal body text goes here.</p>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        -->
+		    {{ end }}
+        </tbody>
+		  </table>
+      <form class="form-inline text-center form-inline-block" name="submit-order" action="/cart-to-request" method="POST">
+        <button type="submit" class="btn btn-primary">Submit request</button>
+      </form>
+      {{ else }}
+      No drafts found
+      {{ end }}
+		</main>
+  <footer class="footer mt-auto py-3">
+    {{ template "footer.gohtml" }}
+  </footer>
+  <script src="/static/js/cart.js"></script>
+</html>
