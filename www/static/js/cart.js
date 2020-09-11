@@ -13,7 +13,7 @@ function deleteItem(obj){
   data["id"] = id
   var json_data = JSON.stringify(data)
 
-  $(obj).prop("disabled", true);
+  $(obj).disabled = true;
   // Fire off the request
   request = $.ajax({
     url: "/api/v1/cart/remove",
@@ -45,7 +45,7 @@ function deleteItem(obj){
   // if the request failed or succeeded
   request.always(function () {
     // Reenable the inputs
-    $(obj).prop("disabled", false);
+    $(obj).disabled = false;
   });
 
 };
@@ -72,17 +72,26 @@ function loadTable() {
       if ('content' in document.createElement('template')) {
         $.each(response.requests, function(i, item) {
           var t = document.querySelector('#cart_item_template'),
-          tr = t.content.querySelector('tr');
-          tr.setAttribute("id", item.id);
-          td = t.content.querySelectorAll('td');
-          td[0].querySelector('img').src = item.survey.icon;
-          td[1].textContent = item.survey.name;
-          td[2].textContent = item.request_reason;
-          button_edit = td[3].querySelector('#cart_button_edit');
-          button_edit.setAttribute('data-request_id', item.id);
-          button_delete = td[3].querySelector('#cart_button_delete')
-          button_delete.setAttribute('data-request_id', item.id);
-          button_delete.setAttribute ('onclick', 'deleteItem(this)');
+          // Setting all requeired elements
+          cart_item = t.content.querySelector('tr');
+          cart_icon = t.content.querySelector('#cart_icon');
+          cart_name = t.content.querySelector('#cart_name');
+          cart_reason = t.content.querySelector('#cart_reason');
+          cart_button_edit = t.content.querySelector('#cart_button_edit');
+          cart_button_delete = t.content.querySelector('#cart_button_delete');
+
+          cart_item.id = item.id;
+          if (item.survey.icon != "") {
+            cart_icon.src = item.survey.icon;
+          } else {
+            cart_icon.src = '/static/logo.png';
+          }
+          cart_name.textContent = item.survey.name;
+          cart_reason.textContent = item.request_reason;
+          cart_button_edit.setAttribute('data-request_id', item.id);
+          cart_button_edit.setAttribute ('onclick', 'editItem(this)');
+          cart_button_delete.setAttribute('data-request_id', item.id);
+          cart_button_delete.setAttribute ('onclick', 'deleteItem(this)');
 
           var tb = document.getElementsByTagName("tbody");
           var clone = document.importNode(t.content, true);

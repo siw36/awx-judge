@@ -20,14 +20,14 @@
         <button id="submit_request" type="submit" class="btn btn-primary" disabled="true">Submit request</button>
       </form>
       <template id="cart_item_template">
-        <tr id="#">
+        <tr>
           <td>
             <div class="cart-icon">
-              <img src="#" class="img-fluid" alt="icon">
+              <img id="cart_icon" src="#" class="img-fluid" alt="icon">
             </div>
           </td>
-          <td class="text-truncate"></td>
-          <td class="text-truncate" style="max-width:150px;"></td>
+          <td id="cart_name" class="text-truncate"></td>
+          <td id="cart_reason" class="text-truncate" style="max-width:150px;"></td>
           <td class="text-center">
             <button type="submit" id="cart_button_edit" data-request_id="" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Edit item"><i class="fas fa-edit"></i></button>
             <button type="submit" id="cart_button_delete" data-request_id="" class="btn btn-danger" data-toggle="tooltip" data-placement="bottom" title="Delete item"><i class="far fa-trash-alt"></i></button>

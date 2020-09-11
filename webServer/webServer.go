@@ -668,6 +668,22 @@ func requests(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func requestsList(w http.ResponseWriter, r *http.Request) {
+	activeSession := securePageHandler(w, r)
+	if !activeSession {
+		return
+	}
+	// Get the requests
+	userID := getUserID(r)
+	requests, err := mongoConnector.DBGetRequests(userID)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	helper.JsonResponse(w, requests)
+}
+
 func reorder(w http.ResponseWriter, r *http.Request) {
 	activeSession := securePageHandler(w, r)
 	if !activeSession {
