@@ -48,25 +48,17 @@ function loadSurvey() {
     } else {
       if ('content' in document.createElement('template')) {
         $.each(surveyAvailable, function(i, available) {
-          var t = document.querySelector('#import_variable_template'),
+          var t = document.querySelector('#import_variable_template');
+          var tc = document.importNode(t.content, true);
           // Setting all requeired elements
-          variable_name = t.content.querySelector('#name');
-          variable_question = t.content.querySelector('#question_name');
-          variable_description = t.content.querySelector('#question_description');
-          variable_default = t.content.querySelector('#default');
-          variable_type = t.content.querySelector('#type');
-          variable_choices = t.content.querySelector('#choices');
-          variable_required = t.content.querySelector('#required');
-          var variable_regex = t.content.querySelector('#regex');
-
-          variable_name.textContent = available.variable;
-          variable_question.textContent = available.question_name;
-          variable_description.textContent = available.question_description;
-          variable_default.textContent = available.default;
-          variable_type.textContent = available.type;
-          variable_choices.textContent = available.choices;
-          variable_required.textContent = available.required;
-          variable_regex.setAttribute("name", available.variable);
+          tc.querySelector('#name').textContent = available.variable;
+          tc.querySelector('#question_name').textContent = available.question_name;
+          tc.querySelector('#question_description').textContent = available.question_description;
+          tc.querySelector('#default').textContent = available.default;
+          tc.querySelector('#type').textContent = available.type;
+          tc.querySelector('#choices').textContent = available.choices;
+          tc.querySelector('#required').textContent = available.required;
+          tc.querySelector('#regex').setAttribute("name", available.variable);
 
           if (templateImported.id == "") {
             console.log("Template not yet imported");
@@ -85,19 +77,18 @@ function loadSurvey() {
             // Fill in the regex, if imported and available fields names are the same
             $.each(templateImported.spec, function(index, imported) {
               if (available.variable == imported.variable && available.type == imported.type) {
-                variable_regex.setAttribute("value", imported.regex);
+                tc.querySelector('#regex').setAttribute("value", imported.regex);
               }
             })
           }
           if (available.type == "multiplechoice" || available.type == "multiselect"){
-            variable_regex.disabled = true;
+            tc.querySelector('#regex').disabled = true;
           } else {
-            variable_regex.disabled = false;
+            tc.querySelector('#regex').disabled = false;
           }
 
           var tb = document.getElementsByTagName('tbody');
-          var clone = document.importNode(t.content, true);
-          tb[0].appendChild(clone);
+          tb[0].appendChild(tc);
         });
         // Enabling inputs after data is filled
         $("#template_name").prop("readonly", false);
