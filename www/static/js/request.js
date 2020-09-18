@@ -30,17 +30,16 @@ function loadSurvey() {
         $('#icon').attr('src', templateImported.icon);
         // For each variable select the right template and start to populate it
         $.each(templateImported.spec, function(i, survey) {
-          var t = document.querySelector('#' + survey.type),
+          var t = document.querySelector('#' + survey.type);
+          var tc = document.importNode(t.content, true);
           // Setting variables that are present in every template
-          variable_question = t.content.querySelector('#question_name');
-          variable_description = t.content.querySelector('#question_description');
-          variable_question.textContent = survey.question_name;
-          variable_description.textContent = survey.question_description;
+          tc.querySelector('#question_name').textContent = survey.question_name;
+          tc.querySelector('#question_description').textContent = survey.question_description;
 
           // Setting variables that are individual to a template
           if( survey.type == "multiplechoice" ) {
             choices = survey.choices.split("\n");
-            variable_choices = t.content.querySelector('#choices');
+            variable_choices = tc.querySelector('#choices');
             variable_choices.setAttribute('name', survey.variable);
             $.each(choices, function(i, choice) {
               var option = document.createElement("option");
@@ -54,7 +53,7 @@ function loadSurvey() {
           }
           if( survey.type == "multiselect" ) {
             choices = survey.choices.split("\n");
-            variable_choices = t.content.querySelector('#choices');
+            variable_choices = tc.querySelector('#choices');
             variable_choices.setAttribute('name', survey.variable);
             $.each(choices, function(i, choice) {
               var wrapper = document.createElement("div");
@@ -75,9 +74,9 @@ function loadSurvey() {
             })
           }
           if( survey.type == "text" ) {
-            variable_input = t.content.querySelector("input");
-            variable_regex_div = t.content.querySelector(".input-group-append");
-            variable_regex = t.content.querySelector("span");
+            variable_input = tc.querySelector("input");
+            variable_regex_div = tc.querySelector(".input-group-append");
+            variable_regex = tc.querySelector("span");
 
             variable_input.setAttribute('name', survey.variable);
             variable_input.required = survey.required;
@@ -89,8 +88,7 @@ function loadSurvey() {
           }
 
           var survey = document.querySelector('#survey_parameters');
-          var clone = document.importNode(t.content, true);
-          survey.appendChild(clone);
+          survey.appendChild(tc);
         });
       } else {
         alert("HTML5 templating does not work with your browser")
