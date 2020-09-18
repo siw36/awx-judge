@@ -34,9 +34,9 @@
           <td class="text-center">
             <button type="submit" id="cart_button_edit" form="cart_edit_form" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Edit item"><i class="fas fa-edit"></i></button>
             <button type="button" id="cart_button_delete" data-request_id="" class="btn btn-danger" data-toggle="tooltip" data-placement="bottom" title="Delete item"><i class="far fa-trash-alt"></i></button>
-            <form id="cart_edit_form" name="cart_edit_form" action="/request" method="POST" style="display:none;">
-              <input id="cart_template_id" name="template_id" value="#" style="display:none;" readonly="true"></input>
-              <input id="cart_request_id" name="request_id" value="#" style="display:none;" readonly="true"></input>
+            <form id="" action="/request" method="POST" style="display:none;">
+              <input id="cart_template_id" name="template_id" value="#" hidden="true"></input>
+              <input id="cart_request_id" name="request_id" value="#" hidden="true"></input>
             </form>
           </td>
         </tr>

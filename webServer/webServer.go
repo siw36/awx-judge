@@ -445,9 +445,20 @@ func request(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Parsing form values
 	var request model.Request
-	request.ID, _ = guuid.Parse(r.PostFormValue("request_id"))
-	request.TemplateID, _ = strconv.Atoi(r.PostFormValue("template_id"))
+	var err error
+	// Only parse request_id when it is posted
+	if r.PostFormValue("request_id") != "" {
+		if request.ID, err = guuid.Parse(r.PostFormValue("request_id")); err != nil {
+			log.Info("Failed to parse form request_id: ", err)
+			return
+		}
+	}
+	if request.TemplateID, err = strconv.Atoi(r.PostFormValue("template_id")); err != nil {
+		log.Info("Failed to parse form request_id: ", err)
+		return
+	}
 
 	t, err := goTemplateLayout("www/request.gohtml")
 	if err != nil {

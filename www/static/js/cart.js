@@ -78,8 +78,8 @@ function loadTable() {
           tc.querySelector('#cart_name').textContent = item.template.name;
           tc.querySelector('#cart_reason').textContent = item.request_reason;
           tc.querySelector('form').id = 'edit-' + item.id;
-          tc.querySelector('#cart_template_id').id = item.template.id;
-          tc.querySelector('#cart_request_id').id = item.id;
+          tc.querySelector('#cart_template_id').setAttribute('value', item.template.id);
+          tc.querySelector('#cart_request_id').setAttribute('value', item.id);
           tc.querySelector('#cart_button_edit').setAttribute('form', 'edit-' + item.id);
           tc.querySelector('#cart_button_delete').setAttribute('data-request_id', item.id);
           tc.querySelector('#cart_button_delete').setAttribute('onclick', 'deleteItem(this)');
