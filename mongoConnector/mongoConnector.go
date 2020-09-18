@@ -3,6 +3,7 @@ package mongoConnector
 import (
 	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	model "../model"
@@ -48,18 +49,18 @@ func DBDisconnect(client *mongo.Client) {
 }
 
 // Create a job template
-func DBCreateJobTemplate(survey model.Survey) error {
+func DBCreateTemplate(template model.Template) error {
 	// Switch collection
-	collection := Client.Database(Config.Mongo.Database).Collection("jobTemplates")
+	collection := Client.Database(Config.Mongo.Database).Collection("templates")
 	// Add metadata
 	now := time.Now()
-	survey.UpdatedAt = now
+	template.UpdatedAt = now
 	// Create or update document
-	filter := bson.D{primitive.E{Key: "id", Value: survey.ID}}
+	filter := bson.D{primitive.E{Key: "id", Value: template.ID}}
 	var opts = options.Replace().SetUpsert(true)
 	*opts.Upsert = true
 	log.Info("Writing job template to DB")
-	_, err := collection.ReplaceOne(context.TODO(), filter, survey, opts)
+	_, err := collection.ReplaceOne(context.TODO(), filter, template, opts)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -67,29 +68,44 @@ func DBCreateJobTemplate(survey model.Survey) error {
 	return nil
 }
 
-// Get a job template
-func DBGetJobTemplate(id string) (model.Survey, error) {
-	filter := bson.D{primitive.E{Key: "id", Value: id}}
+// Get a job Template
+func DBGetTemplate(id int) (model.Template, error) {
+	filter := bson.D{primitive.E{"id", id}}
 	opts := options.FindOne().SetSort(bson.D{primitive.E{Key: "name", Value: 1}})
-	var result model.Survey
-	collection := Client.Database(Config.Mongo.Database).Collection("jobTemplates")
+	var result model.Template
+	collection := Client.Database(Config.Mongo.Database).Collection("templates")
 	err := collection.FindOne(context.TODO(), filter, opts).Decode(&result)
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
-			log.Error(err)
-			return result, errors.New("Could not find requested job template")
+			return result, errors.New("Could not find requested job template in DB with ID " + strconv.Itoa(id))
 		}
-		log.Error(err)
+		return result, err
 	}
 	return result, nil
 }
 
-func DBGetJobTemplateAll() ([]model.Survey, error) {
+// Create a job template
+func DBRemoveTemplate(templateID int) error {
+	// Switch collection
+	collection := Client.Database(Config.Mongo.Database).Collection("templates")
+	// Remove the job template from DB
+	filter := bson.D{{"id", templateID}}
+	var opts = options.Delete()
+	log.Info("Deleting job template with ID ", templateID)
+	_, err := collection.DeleteOne(context.TODO(), filter, opts)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	return nil
+}
+
+func DBGetTemplateAll() ([]model.Template, error) {
 	filter := bson.D{}
 	opts := options.Find().SetSort(bson.D{primitive.E{Key: "name", Value: 1}})
-	var results []model.Survey
-	collection := Client.Database(Config.Mongo.Database).Collection("jobTemplates")
+	var results []model.Template
+	collection := Client.Database(Config.Mongo.Database).Collection("templates")
 	cursor, err := collection.Find(context.TODO(), filter, opts)
 	if err != nil {
 		log.Error(err)
@@ -314,14 +330,14 @@ func DBGetRequest(userID string, requestID guuid.UUID) (model.Request, error) {
 	var result model.Request
 	// Switch collection
 	collection := Client.Database(Config.Mongo.Database).Collection("requests")
-	filter := bson.D{primitive.E{Key: "user_id", Value: userID}, primitive.E{Key: "request_id", Value: requestID}}
+	filter := bson.D{primitive.E{Key: "user_id", Value: userID}, primitive.E{Key: "id", Value: requestID}}
 	opts := options.FindOne()
 	err := collection.FindOne(context.TODO(), filter, opts).Decode(&result)
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
 			log.Error(err)
-			return result, errors.New("Could not find requested request")
+			return result, errors.New("Could not find request")
 		}
 		log.Error(err)
 	}

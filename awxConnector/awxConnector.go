@@ -3,10 +3,9 @@ package awxConnector
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	model "../model"
-
-	awxGo "github.com/Colstuwjx/awx-go"
 	log "github.com/Sirupsen/logrus"
 )
 
@@ -14,35 +13,56 @@ var (
 	Config model.Config
 )
 
-func GetTemplates() []*awxGo.JobTemplate {
-	log.Info("Get job templates from AWX")
-	var awx = awxGo.NewAWX(Config.AWX.Host, Config.AWX.User, Config.AWX.Password, nil)
-	result, _, err := awx.JobTemplateService.ListJobTemplates(map[string]string{"page_size": "10000"})
-	if err != nil {
-		log.Error(err)
-		return nil
-	}
-	// for _, template := range result {
-	// 	log.Info(template.Name)
-	// }
-	return result
-}
-
-func GetSurveySpec(ID string) (model.Survey, error) {
+func GetTemplates() ([]model.Template, error) {
 	client := &http.Client{}
-	var surveySpec model.Survey
-	request, err := http.NewRequest("GET", Config.AWX.Host+"/api/v2/job_templates/"+ID+"/survey_spec/", nil)
+	var jobTemplates model.ListTemplatesResponse
+	request, err := http.NewRequest("GET", Config.AWX.Host+"/api/v2/job_templates/?page_size=10000", nil)
 	if err != nil {
-		return surveySpec, err
+		return jobTemplates.Results, err
 	}
 	request.SetBasicAuth(Config.AWX.User, Config.AWX.Password)
-	log.Info("Get survey spec for job template " + ID)
+	log.Info("Getting all job templates from AWX")
 	response, err := client.Do(request)
 	if err != nil {
-		return surveySpec, err
+		return jobTemplates.Results, err
 	}
-	surveySpec.ID = ID
-	json.NewDecoder(response.Body).Decode(&surveySpec)
+	json.NewDecoder(response.Body).Decode(&jobTemplates)
 	defer response.Body.Close()
-	return surveySpec, err
+	return jobTemplates.Results, err
+}
+
+func GetTemplate(ID int) (model.Template, error) {
+	client := &http.Client{}
+	var jobTemplate model.Template
+	request, err := http.NewRequest("GET", Config.AWX.Host+"/api/v2/job_templates/"+strconv.Itoa(ID), nil)
+	if err != nil {
+		return jobTemplate, err
+	}
+	request.SetBasicAuth(Config.AWX.User, Config.AWX.Password)
+	log.Info("Getting job template " + strconv.Itoa(ID) + " from AWX")
+	response, err := client.Do(request)
+	if err != nil {
+		return jobTemplate, err
+	}
+	json.NewDecoder(response.Body).Decode(&jobTemplate)
+	defer response.Body.Close()
+	return jobTemplate, err
+}
+
+func GetSurvey(ID int) ([]model.Survey, error) {
+	client := &http.Client{}
+	var template model.Template
+	request, err := http.NewRequest("GET", Config.AWX.Host+"/api/v2/job_templates/"+strconv.Itoa(ID)+"/survey_spec/", nil)
+	if err != nil {
+		return template.Survey, err
+	}
+	request.SetBasicAuth(Config.AWX.User, Config.AWX.Password)
+	log.Info("Getting survey spec from AWX for job template " + strconv.Itoa(ID))
+	response, err := client.Do(request)
+	if err != nil {
+		return template.Survey, err
+	}
+	json.NewDecoder(response.Body).Decode(&template)
+	defer response.Body.Close()
+	return template.Survey, err
 }

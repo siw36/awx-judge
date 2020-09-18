@@ -2,19 +2,16 @@
 var request;
 function loadShopItems() {
   request = $.ajax({
-    url: '/api/v1/shop/list',
+    url: '/api/v1/templates/list',
     type: "GET",
-    // beforeSend: function() {
-    //     $('#current_page').append("loading..");
-    //     },
-    // success: finished //Change to this
   });
 
   // Callback handler that will be called on success
   request.done(function (response, textStatus, jqXHR){
     // Handler for no items in cart
-    if (response.length <= 0) {
-      $("#shop").html("No services available. If you are an admin, you can import some in the import tab.");
+    if (response == null) {
+      $("#shop").html("<p>No services available. If you are an admin, you can import some in the import tab.</p>");
+      $('#loader').hide('slow', function(){ $('#loader').remove(); });
       return
     }
     console.log("Loading shop items")
@@ -27,7 +24,7 @@ function loadShopItems() {
           card_icon = t.content.querySelector('#card_icon');
           card_name = t.content.querySelector('#card_name');
           card_description = t.content.querySelector('#card_description');
-          card_id = t.content.querySelector('#card_id');
+          template_id = t.content.querySelector('#template_id');
 
           if (item.icon != "") {
             card_icon.setAttribute('src', item.icon);
@@ -36,7 +33,7 @@ function loadShopItems() {
           }
           card_name.textContent = item.name;
           card_description.textContent = item.description;
-          card_id.value = item.id;
+          template_id.value = item.id;
 
           var shop = $('#shop')
           var clone = document.importNode(t.content, true);
@@ -46,6 +43,7 @@ function loadShopItems() {
         alert("HTML5 templating does not work with your browser");
       }
     });
+    $('#loader').hide('slow', function(){ $('#loader').remove(); });
   });
 }
 

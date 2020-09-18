@@ -38,23 +38,34 @@ type Request struct {
 	RequestReason string     `json:"request_reason" bson:"request_reason"`
 	Reason        string     `json:"reason" bson:"reason"`
 	State         string     `json:"state" bson:"state"`
-	TemplateID    string     `json:"template_id" bson:"template_id"`
-	Survey        Survey     `json:"survey" bson:"survey"`
+	TemplateID    int        `json:"template_id" bson:"template_id"`
+	Template      Template   `json:"template" bson:"template"`
 	CreatedAt     time.Time  `json:"created_at" bson:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at" bson:"updated_at"`
 }
 
-type Survey struct {
-	ID          string       `json:"id" bson:"id"`
-	Name        string       `json:"name" bson:"name"`
-	Description string       `json:"description" bson:"description"`
-	IconLink    string       `json:"icon_link" bson:"icon_link"`
-	Icon        string       `json:"icon" bson:"icon"`
-	Spec        []SurveySpec `json:"spec" bson:"spec"`
-	UpdatedAt   time.Time    `json:"updated_at" bson:"updated_at"`
+type Pagination struct {
+	Count    int         `json:"count"`
+	Next     interface{} `json:"next"`
+	Previous interface{} `json:"previous"`
 }
 
-type SurveySpec struct {
+type ListTemplatesResponse struct {
+	Pagination
+	Results []Template `json:"results"`
+}
+
+type Template struct {
+	ID          int       `json:"id" bson:"id"`
+	Name        string    `json:"name" bson:"name"`
+	Description string    `json:"description" bson:"description"`
+	IconLink    string    `json:"icon_link" bson:"icon_link"`
+	Icon        string    `json:"icon" bson:"icon"`
+	Survey      []Survey  `json:"spec" bson:"spec"`
+	UpdatedAt   time.Time `json:"updated_at" bson:"updated_at"`
+}
+
+type Survey struct {
 	Choices             string `json:"choices" bson:"choices"`
 	Default             string `json:"default" bson:"default"`
 	Max                 string `json:"max" bson:"max"`

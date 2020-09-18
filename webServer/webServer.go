@@ -36,31 +36,42 @@ func Serve() {
 	fsLogos := http.FileServer(http.Dir("/tmp"))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fsStatic))
 	r.PathPrefix("/icons/").Handler(http.StripPrefix("/tmp/icons/", fsLogos))
+	// Default
+	r.HandleFunc("/", loginForm).Methods("GET")
 	// Login
 	r.HandleFunc("/login", loginForm).Methods("GET")
-	r.HandleFunc("/login-internal", loginInternal).Methods("POST")
+	r.HandleFunc("/api/v1/login/internal", loginInternal).Methods("POST")
 	r.HandleFunc("/logout", logout).Methods("GET")
 	// Shop
 	r.HandleFunc("/shop", shop)
-	r.HandleFunc("/api/v1/shop/list", shopList).Methods("GET")
-	// Import
-	r.HandleFunc("/templates", templates)
-	r.HandleFunc("/import-template-form", importTemplateForm)
-	r.HandleFunc("/import-template", importTemplate)
+	// Templates import
+	r.HandleFunc("/template-import", templateImport)
+	r.HandleFunc("/template-import-form", templateImportForm).Methods("POST")
+	r.HandleFunc("/api/v1/import/add", templateImportAdd).Methods("POST")
+	r.HandleFunc("/api/v1/import/list", templateImportList).Methods("GET")
+	r.HandleFunc("/api/v1/import/get", templateImportGet).Methods("POST")
+	r.HandleFunc("/api/v1/import/survey/get", templateImportSurveyGet).Methods("POST")
+	// Templates
+	r.HandleFunc("/api/v1/templates/get", templateGet).Methods("POST")
+	r.HandleFunc("/api/v1/templates/list", templateList).Methods("GET")
+	r.HandleFunc("/api/v1/templates/remove", templateRemove).Methods("POST")
 	// Cart
 	r.HandleFunc("/cart", cart).Methods("GET")
 	r.HandleFunc("/api/v1/cart/list", cartList).Methods("GET")
-	r.HandleFunc("/cart-add", cartAdd).Methods("POST")
+	r.HandleFunc("/api/v1/cart/add", cartAdd).Methods("POST")
 	r.HandleFunc("/api/v1/cart/remove", cartRemove).Methods("POST")
-	r.HandleFunc("/cart-edit", cartEdit).Methods("POST")
-	r.HandleFunc("/cart-to-request", cartToRequest).Methods("POST")
+	r.HandleFunc("/api/v1/cart/edit", cartEdit).Methods("POST")
+	r.HandleFunc("/api/v1/cart/execute", cartToRequest).Methods("POST")
 	// Request
-	r.HandleFunc("/request-template-form", requestTemplateForm).Methods("POST")
-	r.HandleFunc("/request-template-form-edit", requestTemplateFormEdit).Methods("POST")
-	r.HandleFunc("/request-template-form-reorder", requestTemplateFormReorder).Methods("POST")
+	r.HandleFunc("/request", request).Methods("POST")
+	// Requests (already existant)
 	r.HandleFunc("/requests", requests).Methods("GET")
-	r.HandleFunc("/reorder", reorder).Methods("POST")
+	// r.HandleFunc("/api/v1/requests/reorder", requestReorder).Methods("POST")
 	r.HandleFunc("/api/v1/requests/list", requestsList).Methods("GET")
+	// make this a post value with ajax, not path param
+	r.HandleFunc("/api/v1/requests/get", requestsGet).Methods("GET")
+	// r.HandleFunc("/api/v1/requests/remove", requestRemove).Methods("POST") // Do not use this in v0.1 (too complicated)
+	// r.HandleFunc("/api/v1/requests/edit", requestEdit).Methods("POST") // Do not use this in v0.1 (too complicated)
 
 	srv := &http.Server{
 		Addr: "0.0.0.0:8080",
@@ -73,6 +84,7 @@ func Serve() {
 
 	// Run our server in a goroutine so that it doesn't block.
 	go func() {
+		log.Info("Starting server at ", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil {
 			log.Fatal(err)
 		}
@@ -102,7 +114,7 @@ func Serve() {
 
 }
 
-func templateLayout(templateFile string) (*template.Template, error) {
+func goTemplateLayout(templateFile string) (*template.Template, error) {
 	// Construct the template
 	// Template functions
 	tFuncs := template.FuncMap{"StringsSplit": strings.Split}
@@ -113,27 +125,263 @@ func templateLayout(templateFile string) (*template.Template, error) {
 	return t, err
 }
 
-func templates(w http.ResponseWriter, r *http.Request) {
+////
+// Templates import
+////
+
+func templateImport(w http.ResponseWriter, r *http.Request) {
 	// Check for active session
 	activeSession := securePageHandler(w, r)
 	if !activeSession {
 		return
 	}
-	// Show spinner and build the real website asynchonous
-	// TODO: Check if the job template is already imported
-	// If so: Create update/re-import button
-	t, err := templateLayout("www/templates.gohtml")
+	t, err := goTemplateLayout("www/template-import.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	err = t.Execute(w, awxConnector.GetTemplates())
+	err = t.Execute(w, nil)
 	if err != nil {
 		log.Error(err)
 		return
 	} else {
-		log.Info("Parsed templates.gohtml")
+		log.Info("Parsed template-import.gohtml")
 	}
+}
+
+func templateImportForm(w http.ResponseWriter, r *http.Request) {
+	// Check for active session
+	activeSession := securePageHandler(w, r)
+	if !activeSession {
+		return
+	}
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Error(err)
+		return
+	}
+
+	id := r.PostFormValue("import_form_id")
+	if _, err := strconv.Atoi(id); err != nil {
+		msg := "Request template failed: import_form_id is undefined or malformed"
+		log.Error(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
+		return
+	}
+
+	// Render template
+	t, err := goTemplateLayout("www/template-import-form.gohtml")
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Serve site
+	err = t.Execute(w, id)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} else {
+		log.Info("Parsed www/template-import-form.gohtml")
+	}
+}
+
+func templateImportList(w http.ResponseWriter, r *http.Request) {
+	// Check for active session
+	activeSession := securePageHandler(w, r)
+	if !activeSession {
+		return
+	}
+	templates, err := awxConnector.GetTemplates()
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	helper.JsonResponse(w, templates)
+}
+
+func templateImportGet(w http.ResponseWriter, r *http.Request) {
+	// Check for active session
+	activeSession := securePageHandler(w, r)
+	if !activeSession {
+		return
+	}
+	var templateQuery model.Template
+	err := json.NewDecoder(r.Body).Decode(&templateQuery)
+	if err != nil {
+		log.Error("Parsing json for templateImportGet request failed with error: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	template, err := awxConnector.GetTemplate(templateQuery.ID)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	helper.JsonResponse(w, template)
+}
+
+func templateImportSurveyGet(w http.ResponseWriter, r *http.Request) {
+	// Check for active session
+	activeSession := securePageHandler(w, r)
+	if !activeSession {
+		return
+	}
+	var templateQuery model.Template
+	err := json.NewDecoder(r.Body).Decode(&templateQuery)
+	if err != nil {
+		log.Error("Parsing json for templateImportSurveyGet request failed with error: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	survey, err := awxConnector.GetSurvey(templateQuery.ID)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	helper.JsonResponse(w, survey)
+}
+
+func templateImportAdd(w http.ResponseWriter, r *http.Request) {
+	// Check for active session
+	activeSession := securePageHandler(w, r)
+	if !activeSession {
+		return
+	}
+	err := r.ParseForm()
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	templateID, _ := strconv.Atoi(r.PostFormValue("template_import_form_id"))
+	template, err := awxConnector.GetTemplate(templateID)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	template.Survey, err = awxConnector.GetSurvey(templateID)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	log.Info("Parsing import form variables")
+	for key, value := range r.Form {
+		switch key {
+		case "template_name":
+			template.Name = strings.Join(value, "")
+		case "template_description":
+			template.Description = strings.Join(value, "")
+		case "template_icon_link":
+			template.IconLink = strings.Join(value, "")
+		default:
+			for i, spec := range template.Survey {
+				if spec.Variable == key {
+					template.Survey[i].RegEx = strings.Join(value, "")
+				}
+			}
+		}
+	}
+	// Download icon
+	if helper.ValidUrl(template.IconLink) {
+		log.Info("Downloading icon")
+		err, template.Icon = helper.DownloadIcon(template.ID, template.IconLink)
+		if err != nil {
+			log.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	} else {
+		log.Info("Skipping icon download due to malformed URL")
+	}
+	// Write the object to DB
+	err = mongoConnector.DBCreateTemplate(template)
+	if err != nil {
+		log.Error("Import failed")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+////
+// Template
+////
+
+func templateList(w http.ResponseWriter, r *http.Request) {
+	activeSession := securePageHandler(w, r)
+	if !activeSession {
+		return
+	}
+	var templates []model.Template
+	var err error
+	templates, err = mongoConnector.DBGetTemplateAll()
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	helper.JsonResponse(w, templates)
+}
+
+func templateRemove(w http.ResponseWriter, r *http.Request) {
+	activeSession := securePageHandler(w, r)
+	if !activeSession {
+		return
+	}
+
+	// Parse json
+	log.Info("Parsing json for templateRemove request")
+	var template model.Template
+	err := json.NewDecoder(r.Body).Decode(&template)
+	if err != nil {
+		log.Error("Parsing json for templateRemove request failed with error: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = mongoConnector.DBRemoveTemplate(template.ID)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// ToDo: delete the icon
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func templateGet(w http.ResponseWriter, r *http.Request) {
+	activeSession := securePageHandler(w, r)
+	if !activeSession {
+		return
+	}
+
+	// Parse json
+	log.Info("Parsing json for templateGet request")
+	var templateQuery model.Template
+	err := json.NewDecoder(r.Body).Decode(&templateQuery)
+	if err != nil {
+		log.Error("Parsing json for templateGet request failed with error: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	template, err := mongoConnector.DBGetTemplate(templateQuery.ID)
+	if err != nil {
+		log.Error(err)
+		helper.JsonResponse(w, template)
+		return
+	}
+	helper.JsonResponse(w, template)
+	return
 }
 
 // // Get all inputs
@@ -167,105 +415,6 @@ func templates(w http.ResponseWriter, r *http.Request) {
 // 	t.Execute(w, struct{ Success bool }{true})
 // }
 
-func importTemplateForm(w http.ResponseWriter, r *http.Request) {
-	// Check for active session
-	activeSession := securePageHandler(w, r)
-	if !activeSession {
-		return
-	}
-	err := r.ParseForm()
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	id := r.PostFormValue("id")
-	if _, err := strconv.Atoi(id); err != nil {
-		msg := "Request template failed: id is undefined or malformed"
-		log.Error(msg)
-		http.Error(w, msg, 400)
-		return
-	}
-
-	// Get data
-	survey, err := awxConnector.GetSurveySpec(id)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	survey.Name = r.PostFormValue("name")
-	survey.Description = r.PostFormValue("description")
-
-	// Render template
-	t, err := templateLayout("www/import-template-form.gohtml")
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	// Serve site
-	err = t.Execute(w, survey)
-	if err != nil {
-		log.Error(err)
-	} else {
-		log.Info("Parsed www/import-template-form.gohtml")
-	}
-
-}
-
-func importTemplate(w http.ResponseWriter, r *http.Request) {
-	// Check for active session
-	activeSession := securePageHandler(w, r)
-	if !activeSession {
-		return
-	}
-	err := r.ParseForm()
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	survey, err := awxConnector.GetSurveySpec(r.PostFormValue("template_id"))
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	log.Info("Parsing import form variables")
-	for key, value := range r.Form {
-		switch key {
-		case "name":
-			survey.Name = strings.Join(value, "")
-		case "description":
-			survey.Description = strings.Join(value, "")
-		case "icon-link":
-			survey.IconLink = strings.Join(value, "")
-		default:
-			for i, spec := range survey.Spec {
-				if spec.Variable == key {
-					survey.Spec[i].RegEx = strings.Join(value, "")
-				}
-			}
-		}
-	}
-	// Download icon
-	if survey.IconLink != "null" {
-		log.Info("Downloading icon")
-		err, survey.Icon = helper.DownloadIcon(survey.ID, survey.IconLink)
-		if err != nil {
-			log.Error(err)
-			return
-		}
-	}
-	// Write the object to DB
-	err = mongoConnector.DBCreateJobTemplate(survey)
-	if err != nil {
-		log.Error("Import failed")
-		return
-	}
-	http.Redirect(w, r, "/shop", 201)
-	return
-}
-
 func shop(w http.ResponseWriter, r *http.Request) {
 	// Check for active session
 	activeSession := securePageHandler(w, r)
@@ -275,7 +424,7 @@ func shop(w http.ResponseWriter, r *http.Request) {
 
 	// Render template
 	//t := template.New("shop")
-	t, err := templateLayout("www/shop.gohtml")
+	t, err := goTemplateLayout("www/shop.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -290,58 +439,49 @@ func shop(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func shopList(w http.ResponseWriter, r *http.Request) {
+func request(w http.ResponseWriter, r *http.Request) {
 	activeSession := securePageHandler(w, r)
 	if !activeSession {
 		return
 	}
-	var data []model.Survey
-	var err error
-	data, err = mongoConnector.DBGetJobTemplateAll()
-	if err != nil {
-		log.Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	helper.JsonResponse(w, data)
-}
 
-func requestTemplateForm(w http.ResponseWriter, r *http.Request) {
-	activeSession := securePageHandler(w, r)
-	if !activeSession {
-		return
-	}
-	id := r.PostFormValue("id")
-	if _, err := strconv.Atoi(id); err != nil {
-		msg := "Request template failed: id is undefined or malformed"
-		log.Error(msg)
-		http.Error(w, msg, 400)
-		return
-	}
+	var request model.Request
+	request.ID, _ = guuid.Parse(r.PostFormValue("request_id"))
+	request.TemplateID, _ = strconv.Atoi(r.PostFormValue("template_id"))
 
-	// Render template
-	// Not using templateLayout because we need a addition function
-	//https://www.calhoun.io/intro-to-templates-p3-functions/
-	t, err := templateLayout("www/request-template-form.gohtml")
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	// Get template survey
-	templateSurvey, err := mongoConnector.DBGetJobTemplate(id)
+	t, err := goTemplateLayout("www/request.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
 	}
 
 	// Serve site
-	err = t.Execute(w, templateSurvey)
+	err = t.Execute(w, request)
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed www/request-template-form.gohtml")
+		log.Info("Parsed www/request.gohtml")
 	}
+}
+
+func requestSpec(w http.ResponseWriter, r *http.Request) {
+	activeSession := securePageHandler(w, r)
+	if !activeSession {
+		return
+	}
+	id, err := strconv.Atoi(r.PostFormValue("id"))
+	if err != nil {
+		msg := "Request temaplte spec failed: id is undefined or malformed"
+		log.Error(msg)
+		http.Error(w, msg, 400)
+		return
+	}
+	template, err := mongoConnector.DBGetTemplate(id)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	helper.JsonResponse(w, template)
 }
 
 func requestTemplateFormEdit(w http.ResponseWriter, r *http.Request) {
@@ -380,7 +520,7 @@ func requestTemplateFormEdit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render template
-	t, err := templateLayout("www/request-template-form-edit.gohtml")
+	t, err := goTemplateLayout("www/request-template-form-edit.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -425,7 +565,7 @@ func requestTemplateFormReorder(w http.ResponseWriter, r *http.Request) {
 	request, err := mongoConnector.DBGetRequest(userID, requestID)
 
 	// Render template
-	t, err := templateLayout("www/request-template-form-edit.gohtml")
+	t, err := goTemplateLayout("www/request-template-form-edit.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -446,7 +586,7 @@ func cart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Render template
-	t, err := templateLayout("www/cart.gohtml")
+	t, err := goTemplateLayout("www/cart.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -489,11 +629,15 @@ func cartAdd(w http.ResponseWriter, r *http.Request) {
 	// Create a request object from form values
 	var request model.Request
 	r.ParseForm()
-	request.TemplateID = r.PostFormValue("template_id")
+	request.TemplateID, err = strconv.Atoi(r.PostFormValue("template_id"))
+	if err != nil {
+		log.Error(err)
+		return
+	}
 	request.RequestReason = r.PostFormValue("request_reason")
 	// Get the survey spec from imported template
 	// and set it for this request
-	request.Survey, err = mongoConnector.DBGetJobTemplate(request.TemplateID)
+	request.Template, err = mongoConnector.DBGetTemplate(request.TemplateID)
 	if err != nil {
 		log.Error(err)
 		return
@@ -501,11 +645,11 @@ func cartAdd(w http.ResponseWriter, r *http.Request) {
 
 	// Fill in the variables
 	log.Info("Parsing request form variables")
-	for index, item := range request.Survey.Spec {
+	for index, item := range request.Template.Survey {
 		for key, value := range r.Form {
 			switch key {
 			case item.Variable:
-				request.Survey.Spec[index].Value = strings.Join(value, "")
+				request.Template.Survey[index].Value = strings.Join(value, "")
 			}
 		}
 	}
@@ -589,12 +733,16 @@ func cartEdit(w http.ResponseWriter, r *http.Request) {
 	// Create a request object from form values
 	var request model.Request
 	r.ParseForm()
-	request.TemplateID = r.PostFormValue("template_id")
+	request.TemplateID, err = strconv.Atoi(r.PostFormValue("template_id"))
+	if err != nil {
+		log.Error(err)
+		return
+	}
 	request.RequestReason = r.PostFormValue("request_reason")
 	request.ID = guuid.MustParse(r.PostFormValue("request_id"))
 	// Get the survey spec from imported template
 	// and set it for this request
-	request.Survey, err = mongoConnector.DBGetJobTemplate(request.TemplateID)
+	request.Template, err = mongoConnector.DBGetTemplate(request.TemplateID)
 	if err != nil {
 		log.Error(err)
 		return
@@ -602,11 +750,11 @@ func cartEdit(w http.ResponseWriter, r *http.Request) {
 
 	// Fill in the variables
 	log.Info("Parsing request form variables")
-	for index, item := range request.Survey.Spec {
+	for index, item := range request.Template.Survey {
 		for key, value := range r.Form {
 			switch key {
 			case item.Variable:
-				request.Survey.Spec[index].Value = strings.Join(value, "")
+				request.Template.Survey[index].Value = strings.Join(value, "")
 			}
 		}
 	}
@@ -653,7 +801,7 @@ func requests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Render template
-	t, err := templateLayout("www/requests.gohtml")
+	t, err := goTemplateLayout("www/requests.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -673,9 +821,25 @@ func requestsList(w http.ResponseWriter, r *http.Request) {
 	if !activeSession {
 		return
 	}
-	// Get the requests
 	userID := getUserID(r)
 	requests, err := mongoConnector.DBGetRequests(userID)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	helper.JsonResponse(w, requests)
+}
+
+func requestsGet(w http.ResponseWriter, r *http.Request) {
+	activeSession := securePageHandler(w, r)
+	if !activeSession {
+		return
+	}
+	userID := getUserID(r)
+	vars := mux.Vars(r)
+	requestID := guuid.MustParse(vars["requestID"])
+	requests, err := mongoConnector.DBGetRequest(userID, requestID)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -719,7 +883,7 @@ func loginForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render template
-	t, err := templateLayout("www/login.gohtml")
+	t, err := goTemplateLayout("www/login.gohtml")
 	if err != nil {
 		log.Error(err)
 		return

@@ -51,7 +51,7 @@ func HttpClient() *http.Client {
 	return &client
 }
 
-func DownloadIcon(id string, link string) (err error, icon string) {
+func DownloadIcon(id int, link string) (err error, icon string) {
 	var pv string = "www/static/icons"
 	if _, err := os.Stat(pv); os.IsNotExist(err) {
 		return err, ""
@@ -63,7 +63,7 @@ func DownloadIcon(id string, link string) (err error, icon string) {
 
 	path := fileURL.Path
 	segments := strings.Split(path, ".")
-	fileName := fmt.Sprintf("%s/%s.%s", pv, id, segments[len(segments)-1])
+	fileName := fmt.Sprintf("%s/%s.%s", pv, strconv.Itoa(id), segments[len(segments)-1])
 	file, err := os.Create(fileName)
 	if err != nil {
 		return err, ""
@@ -107,4 +107,15 @@ func JsonResponse(w http.ResponseWriter, data interface{}) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+// ValidUrl tests a string to determine if it is a well-structured url or not.
+func ValidUrl(toTest string) bool {
+	log.Info(toTest)
+	_, err := url.ParseRequestURI(toTest)
+	if err != nil {
+		return false
+	}
+
+	return true
 }
