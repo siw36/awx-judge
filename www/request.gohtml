@@ -52,7 +52,7 @@
       <template id="multiplechoice">
         <div class="form-group">
           <label id="question_name" for="choices">question name</label>
-          <select class="form-control" id="choices" name="var">
+          <select class="form-control" id="choices" name="">
             <option value="">Please choose an option</option>
             <!-- options for each -->
           </select>
@@ -75,9 +75,9 @@
       </template>
       <template id="text">
         <div class="form-group">
-          <label id="question_name" for="variable">question name</label>
+          <label id="question_name" for="">question name</label>
           <div class="input-group">
-            <input type="text" name="var" class="form-control" value="" />
+            <input type="text" name="" class="form-control" value="" />
             <!-- when regex -->
             <div class="input-group-append">
               <span class="input-group-text"></span>
@@ -90,12 +90,12 @@
       </template>
       <template id="textarea">
         <div class="form-group">
-          <label id="question_name" for="variable">question name</label>
+          <label id="question_name" for="">question name</label>
           <div class="input-group">
-            <textarea type="text" id="var" name="var" class="form-control" aria-describedby="var-description" required="true" pattern="regex" aria-describedby="var-append" value="default" ></textarea>
+            <textarea type="text" id="" name="" class="form-control" aria-describedby="" aria-describedby="" value="" ></textarea>
             <!-- when regex -->
             <div class="input-group-append">
-              <span class="input-group-text" id="var-append">Pattern: regex</span>
+              <span class="input-group-text" id="">Pattern: regex</span>
             </div>
           </div>
           <small id="question_description" class="form-text text-muted">
@@ -105,12 +105,12 @@
       </template>
       <template id="password">
         <div class="form-group">
-          <label id="question_name" for="variable">question name</label>
+          <label id="question_name" for="">question name</label>
           <div class="input-group">
-            <input type="password" id="var" name="var" class="form-control" aria-describedby="var-description" required="true" pattern="regex" aria-describedby="var-append" value="default" />
+            <input type="password" id="" name="" class="form-control" aria-describedby="" aria-describedby="" value="" />
             <!-- when regex -->
             <div class="input-group-append">
-              <span class="input-group-text" id="var-append">Pattern: regex</span>
+              <span class="input-group-text" id="">Pattern: regex</span>
             </div>
           </div>
           <small id="question_description" class="form-text text-muted">
@@ -120,8 +120,8 @@
       </template>
       <template id="integer">
         <div class="form-group">
-          <label id="question_name" for="variable">question name</label>
-          <input type="number" id="var" name="var" min="min" max="max" class="form-control" aria-describedby="var-description" required="true" value="default" />
+          <label id="question_name" for="">question name</label>
+          <input type="number" id="" name="" min="" max="" class="form-control" aria-describedby="" value="" />
           <small id="question_description" class="form-text text-muted">
             description
           </small>
@@ -129,8 +129,8 @@
       </template>
       <template id="float">
           <div class="form-group">
-          <label id="question_name" for="variable">question name</label>
-          <input type="number" id="var" name="var" placeholder="1.0" step="0.01" min="min" max="max" class="form-control" aria-describedby="var-description" required="true" value="default" />
+          <label id="question_name" for="">question name</label>
+          <input type="number" id="" name="" placeholder="1.0" step="0.01" min="" max="" class="form-control" aria-describedby="" value="0" />
           <small id="question_description" class="form-text text-muted">
             description
           </small>
