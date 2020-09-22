@@ -64,7 +64,7 @@ function loadSurvey() {
                 input.setAttribute('type', 'checkbox');
                 input.setAttribute('id', choice);
                 input.setAttribute('name', survey.variable);
-                input.value = choice;
+                input.value = choice + '\\n';
                 var label = document.createElement("label");
                 label.setAttribute('class', 'form-check-label');
                 label.setAttribute('for', choice);
@@ -149,14 +149,30 @@ function loadSurvey() {
           console.log("User cart is empty");
           return
         }
-        //console.log(response.requests);
         $.each(response.requests, function(i, response_request) {
           if( response_request.id == request_id ) {
             // Set the request reason
             $('#request_reason').val(response_request.request_reason);
             $.each(response_request.template.spec, function(a, spec) {
-              $(`input[name="${spec.variable}"]`).val(spec.value);
-              // Handle other input type (textares, multpliechoice, multiselect)
+              switch (spec.type) {
+                case "textarea":
+                  $(`textarea[name="${spec.variable}"]`).val(spec.value);
+                  break;
+                case "multiplechoice":
+                  $(`option[value="${spec.value}"]`).prop('selected', true);
+                  break;
+                case "multiselect":
+                  choices = spec.value.split("\n");
+                  $.each(choices, function(i, choice) {
+                    if(choice != ""){
+                      $(`input[name=${spec.variable}][value*=${choice}]`).prop('checked', true);
+                    }
+                  })
+                  break;
+                default:
+                  $(`input[name="${spec.variable}"]`).val(spec.value);
+                  break;
+              }
             })
             return false;
           }
