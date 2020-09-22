@@ -19,9 +19,9 @@
           <!--Dynamically filled by HTML5 template-->
         </tbody>
 		  </table>
-      <form class="form-inline text-center form-inline-block" name="submit-order" action="/cart-to-request" method="POST">
-        <button id="submit_request" type="submit" class="btn btn-primary" disabled="true">Submit request</button>
-      </form>
+      <div class="text-center">
+        <button id="submit_request" type="button" class="btn btn-primary" onclick="submitRequest()" disabled="true">Submit request</button>
+      </div>
       <template id="cart_item_template">
         <tr>
           <td>

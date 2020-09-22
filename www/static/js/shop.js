@@ -9,7 +9,7 @@ function loadShopItems() {
   // Callback handler that will be called on success
   request.done(function (response, textStatus, jqXHR){
     // Handler for no items in cart
-    if (response == null) {
+    if (response == null || response.length <= 0) {
       $("#shop").html("<p>No services available. If you are an admin, you can import some in the import tab.</p>");
       $('#loader').hide('slow', function(){ $('#loader').remove(); });
       return

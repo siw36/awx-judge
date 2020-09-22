@@ -22,7 +22,7 @@ function loadTable() {
           var tc = document.importNode(t.content, true);
           // Setting all requeired elements
           tc.querySelector('tr').id = item.id;
-          tc.querySelector('#request_name').textContent = item.survey.name;
+          tc.querySelector('#request_name').textContent = item.template.name;
           tc.querySelector('#request_reason').textContent = item.request_reason;
           tc.querySelector('#request_state').textContent = item.state;
           tc.querySelector('#request_judge_reason').textContent = item.reason;
@@ -30,7 +30,7 @@ function loadTable() {
           tc.querySelector('#request_button_reorder').setAttribute('onclick', 'reorderItem(this)');
 
           if (item.icon != "") {
-            tc.querySelector('#request_icon').setAttribute('src', item.survey.icon);
+            tc.querySelector('#request_icon').setAttribute('src', item.template.icon);
           } else {
             tc.querySelector('#request_icon').setAttribute('src', '/static/logo.png');
           }

@@ -53,6 +53,9 @@ function deleteItem(obj){
 };
 
 function loadTable() {
+  if (request) {
+    request.abort();
+  }
   request = $.ajax({
     url: '/api/v1/cart/list',
     type: "GET",
@@ -61,7 +64,7 @@ function loadTable() {
   // Callback handler that will be called on success
   request.done(function (response, textStatus, jqXHR){
     // Handler for no items in cart
-    if (response.requests.length <= 0) {
+    if (response.requests == null || response.requests.length <= 0) {
       $('#loader').hide('slow', function(){ $('#loader').remove(); });
       $("#submit_request").prop("disabled", true);
       return
@@ -100,6 +103,46 @@ function loadTable() {
     });
   });
 }
+
+function submitRequest() {
+  // Abort any pending request
+  if (request) {
+    request.abort();
+  }
+
+  $(':button').prop('disabled', true);
+  // Fire off the request
+  request = $.ajax({
+    url: "/api/v1/cart/execute",
+    type: "POST",
+    contentType: "application/json; charset=utf-8"
+  });
+
+  // Callback handler that will be called on success
+  request.done(function (response, textStatus, jqXHR){
+    // Log a message to the console
+    console.log("Created requests based on cart intems");
+    window.location.href="/requests";
+  });
+
+  // Callback handler that will be called on failure
+  request.fail(function (jqXHR, textStatus, errorThrown){
+    // Log the error to the console
+    console.error(
+      "The following error occurred: "+
+      textStatus, errorThrown
+    );
+    // Display alert
+    alert("Something is wrong. Detailed information in console log.")
+  });
+
+  // Callback handler that will be called regardless
+  // if the request failed or succeeded
+  request.always(function () {
+    // Reenable the inputs
+    $(':button').prop('disabled', false);
+  });
+};
 
 // CONSTRUCT TABLE
 $(document).ready(loadTable());
