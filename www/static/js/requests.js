@@ -9,7 +9,7 @@ function loadTable() {
   // Callback handler that will be called on success
   request.done(function (response, textStatus, jqXHR){
     // Handler for no items in cart
-    if (response.length <= 0) {
+    if (response == null || response.length <= 0) {
       $('#requests').html('There are no requests')
       $('#loader').hide('slow', function(){ $('#loader').remove(); });
       return
