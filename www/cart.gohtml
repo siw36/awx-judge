@@ -32,44 +32,25 @@
           <td id="cart_name" class="text-truncate"></td>
           <td id="cart_reason" class="text-truncate" style="max-width:150px;"></td>
           <td class="text-center">
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal"><i class="far fa-eye"></i></button>
-            <button type="submit" id="cart_button_clone" form="" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Clone item"><i class="far fa-clone"></i></button>
-            <!--<button type="submit" id="cart_button_edit" form="" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Edit item"><i class="far fa-edit"></i></button>-->
-            <button type="button" id="cart_button_delete" data-request_id="" class="btn btn-danger" data-toggle="tooltip" data-placement="bottom" title="Delete item"><i class="far fa-trash-alt"></i></button>
-            <!--
-            <form id="edit" action="/request" method="POST" style="display:none;">
-              <input id="cart_template_id" name="template_id" value="#" hidden="true"></input>
-              <input id="cart_request_id" name="request_id" value="#" hidden="true"></input>
-              <input id="cart_action" name="cart_action" value="edit" hidden="true"></input>
+            <button type="submit" id="cart_button_view" form="" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="View request"><i class="far fa-eye"></i></button>
+            <button type="submit" id="cart_button_clone" form="" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Clone request"><i class="far fa-clone"></i></button>
+            <button type="submit" id="cart_button_edit" form="" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Edit request"><i class="far fa-edit"></i></button>
+            <button type="button" id="cart_button_delete" data-request_id="" class="btn btn-danger" data-toggle="tooltip" data-placement="bottom" title="Delete request"><i class="far fa-trash-alt"></i></button>
+            <form id="view" action="/request?action=view" method="POST" style="display:none;">
+              <input id="cart_template_id_view" name="template_id" value="#" hidden="true"></input>
+              <input id="cart_request_id_view" name="request_id" value="#" hidden="true"></input>
             </form>
-            -->
-            <form id="clone" action="/request" method="POST" style="display:none;">
-              <input id="cart_template_id" name="template_id" value="#" hidden="true"></input>
-              <input id="cart_request_id" name="request_id" value="#" hidden="true"></input>
-              <!--<input id="cart_action" name="cart_action" value="clone" hidden="true"></input>-->
+            <form id="edit" action="/request?action=edit" method="POST" style="display:none;">
+              <input id="cart_template_id_edit" name="template_id" value="#" hidden="true"></input>
+              <input id="cart_request_id_edit" name="request_id" value="#" hidden="true"></input>
+            </form>
+            <form id="clone" action="/request?action=clone" method="POST" style="display:none;">
+              <input id="cart_template_id_clone" name="template_id" value="#" hidden="true"></input>
+              <input id="cart_request_id_clone" name="request_id" value="#" hidden="true"></input>
             </form>
           </td>
         </tr>
     </template>
-
-    <div id="modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Modal title</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <p>Modal body text goes here.</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          </div>
-        </div>
-      </div>
-    </div>
 
 		</main>
   <footer class="footer mt-auto py-3">

@@ -136,6 +136,12 @@ function loadSurvey() {
       if (request_id == "00000000-0000-0000-0000-000000000000") {
         return
       }
+      // Get the action type
+      const params = new URLSearchParams(window.location.search);
+      var action = 'none';
+      if (params.has('action')) {
+        action = params.get('action');
+      }
 
       // Get the user cart
       request = $.ajax({
@@ -177,11 +183,60 @@ function loadSurvey() {
             return false;
           }
         })
+        switch (action) {
+          case "view":
+            $('h1').text('View request');
+            $('#template :input').prop("disabled", true);
+            $('#request_submit').text('Back to cart');
+            $('#request_submit').prop('type', 'button');
+            $('#request_submit').attr('onclick', 'window.location.href="/cart"');
+            break;
+          case "edit":
+            $('h1').text('Edit request');
+            $('#request_submit').text('Update');
+            $('#request_submit').attr('onclick', 'edit()');
+            $('#request_id').prop('name', 'request_id');
+            break;
+          case "clone":
+            $('h1').text('Clone request');
+            $('#request_submit').text('Add clone to cart');
+            $('#template').prop('action', '/api/v1/cart/add');
+            break;
+          default:
+            break;
+        }
       });
     }
   });
   $('#request_reason').prop('readonly', false);
   $('#loader').hide('slow', function(){ $('#loader').remove(); });
+};
+
+function edit(){
+  event.preventDefault();
+
+  var serializedData = $('#template').serialize();
+  $("#template :input").prop("readonly", true);
+
+  console.log(serializedData);
+
+  request = $.ajax({
+    url: "/api/v1/cart/edit",
+    type: "POST",
+    data: serializedData
+  });
+
+  request.done(function (response, textStatus, jqXHR){
+    console.log("Edit successful");
+    window.location.href = "/cart";
+  });
+
+  request.fail(function (jqXHR, textStatus, errorThrown){
+    console.error(
+      "The following error occurred: "+
+      textStatus, errorThrown
+    );
+  });
 };
 
 // CONSTRUCT TABLE

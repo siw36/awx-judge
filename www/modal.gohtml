@@ -1,0 +1,50 @@
+<div id="modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Modal title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="container">
+          <div class="card-icon">
+            <img id="icon" src="/static/logo.png" class="img-fluid" alt="icon">
+          </div>
+          <form method="POST" id="template" action="/api/v1/cart/add">
+            <div class="form-group">
+              <label for="template_id">Template ID</label>
+              <input form="template" class="form-control" name="template_id" id="template_id" type="text" readonly="true" value="{{ .TemplateID }}"><br />
+            </div>
+            <div class="form-group">
+              <label for="request_id">Request ID</label>
+              <input form="template" class="form-control" id="request_id" type="text" readonly="true" value="{{ .ID }}"><br />
+            </div>
+            <div class="form-group">
+              <label for="name">Name</label><br />
+              <input form="template" class="form-control" name="name" id="name" type="text" readonly="true" value=""><br />
+            </div>
+            <div class="form-group">
+              <label for="description">Description</label><br />
+              <input form="template" class="form-control" name="description" id="description" type="text" readonly="true" value=""><br />
+            </div>
+            <div class="container page-name">
+              <h4>Survey variables</h4>
+            </div>
+            <div class="form-group">
+              <label for="request_reason">Request reason</label><br />
+              <textarea form="template" class="form-control" name="request_reason" id="request_reason" rows="3" required="true"></textarea>
+            </div>
+            <div class="form-group" id="survey_parameters">
+            <!-- survey templating here -->
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

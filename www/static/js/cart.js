@@ -80,12 +80,18 @@ function loadTable() {
           tc.querySelector('tr').id = item.id;
           tc.querySelector('#cart_name').textContent = item.template.name;
           tc.querySelector('#cart_reason').textContent = item.request_reason;
+          tc.querySelector('#view').id = 'view-' + item.id;
           tc.querySelector('#clone').id = 'clone-' + item.id;
-          // tc.querySelector('#edit').id = 'edit-' + item.id;
-          tc.querySelector('#cart_template_id').setAttribute('value', item.template.id);
-          tc.querySelector('#cart_request_id').setAttribute('value', item.id);
+          tc.querySelector('#edit').id = 'edit-' + item.id;
+          tc.querySelector('#cart_template_id_view').setAttribute('value', item.template.id);
+          tc.querySelector('#cart_request_id_view').setAttribute('value', item.id);
+          tc.querySelector('#cart_template_id_edit').setAttribute('value', item.template.id);
+          tc.querySelector('#cart_request_id_edit').setAttribute('value', item.id);
+          tc.querySelector('#cart_template_id_clone').setAttribute('value', item.template.id);
+          tc.querySelector('#cart_request_id_clone').setAttribute('value', item.id);
+          tc.querySelector('#cart_button_view').setAttribute('form', 'view-' + item.id);
           tc.querySelector('#cart_button_clone').setAttribute('form', 'clone-' + item.id);
-          // tc.querySelector('#cart_button_edit').setAttribute('form', 'edit-' + item.id);
+          tc.querySelector('#cart_button_edit').setAttribute('form', 'edit-' + item.id);
           tc.querySelector('#cart_button_delete').setAttribute('data-request_id', item.id);
           tc.querySelector('#cart_button_delete').setAttribute('onclick', 'deleteItem(this)');
           if (item.template.icon != "") {
