@@ -21,3 +21,8 @@ Deps:
 # Notifications
 - Email (only when set in config file, otherwise disabled)
 - Slack " (write to channel or DM)
+
+
+
+# go templating
+- template id and request id should be query parameters

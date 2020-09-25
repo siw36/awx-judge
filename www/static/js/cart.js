@@ -1,17 +1,14 @@
 var request;
-function deleteItem(obj){
+function requestDelete(request_id){
   // Abort any pending request
   if (request) {
     request.abort();
   }
   // Setup variables
-  var id = $(obj).data("request_id");
   var data = new Object;
-  data["id"] = id
-  var json_data = JSON.stringify(data)
+  data["id"] = request_id;
+  var json_data = JSON.stringify(data);
 
-  $(obj).disabled = true;
-  // Fire off the request
   request = $.ajax({
     url: "/api/v1/cart/remove",
     type: "POST",
@@ -19,13 +16,12 @@ function deleteItem(obj){
     data: json_data
   });
 
-  // Callback handler that will be called on success
   request.done(function (response, textStatus, jqXHR){
     // Log a message to the console
     console.log("Delete cart item successful");
     // Update table
-    $('#' + id).hide('slow', function(){
-      $('#' + id).remove();
+    $('#' + request_id).hide('slow', function(){
+      $('#' + request_id).remove();
       // Disable submit button when no items are in cart
       if ( $('#cart tr').length == 0 ){
         $("#submit_request").prop("disabled", true);
@@ -33,7 +29,6 @@ function deleteItem(obj){
     });
   });
 
-  // Callback handler that will be called on failure
   request.fail(function (jqXHR, textStatus, errorThrown){
     // Log the error to the console
     console.error(
@@ -44,11 +39,7 @@ function deleteItem(obj){
     alert("Something is wrong. Detailed information in console log.")
   });
 
-  // Callback handler that will be called regardless
-  // if the request failed or succeeded
   request.always(function () {
-    // Reenable the inputs
-    $(obj).disabled = false;
   });
 };
 
@@ -80,20 +71,11 @@ function loadTable() {
           tc.querySelector('tr').id = item.id;
           tc.querySelector('#cart_name').textContent = item.template.name;
           tc.querySelector('#cart_reason').textContent = item.request_reason;
-          tc.querySelector('#view').id = 'view-' + item.id;
-          tc.querySelector('#clone').id = 'clone-' + item.id;
-          tc.querySelector('#edit').id = 'edit-' + item.id;
-          tc.querySelector('#cart_template_id_view').setAttribute('value', item.template.id);
-          tc.querySelector('#cart_request_id_view').setAttribute('value', item.id);
-          tc.querySelector('#cart_template_id_edit').setAttribute('value', item.template.id);
-          tc.querySelector('#cart_request_id_edit').setAttribute('value', item.id);
-          tc.querySelector('#cart_template_id_clone').setAttribute('value', item.template.id);
-          tc.querySelector('#cart_request_id_clone').setAttribute('value', item.id);
-          tc.querySelector('#cart_button_view').setAttribute('form', 'view-' + item.id);
-          tc.querySelector('#cart_button_clone').setAttribute('form', 'clone-' + item.id);
-          tc.querySelector('#cart_button_edit').setAttribute('form', 'edit-' + item.id);
-          tc.querySelector('#cart_button_delete').setAttribute('data-request_id', item.id);
-          tc.querySelector('#cart_button_delete').setAttribute('onclick', 'deleteItem(this)');
+
+          tc.querySelector('#cart_button_view').setAttribute('href', `/request?action=view&source=cart&template_id=${item.template.id}&request_id=${item.id}`);
+          tc.querySelector('#cart_button_clone').setAttribute('href', `/request?action=clone&source=cart&template_id=${item.template.id}&request_id=${item.id}`);
+          tc.querySelector('#cart_button_edit').setAttribute('href', `/request?action=edit&source=cart&template_id=${item.template.id}&request_id=${item.id}`);
+          tc.querySelector('#cart_button_delete').setAttribute('onclick', `requestDelete('${item.id}')`);
           if (item.template.icon != "") {
             tc.querySelector('#cart_icon').src = item.template.icon;
           } else {

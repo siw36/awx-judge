@@ -17,23 +17,56 @@
         <div class="card-icon">
           <img id="icon" src="/static/logo.png" class="img-fluid" alt="icon">
         </div>
-				<form method="POST" id="template" action="/api/v1/cart/add">
-					<div class="form-group">
-						<label for="template_id">Template ID</label>
-						<input form="template" class="form-control" name="template_id" id="template_id" type="text" readonly="true" value="{{ .TemplateID }}"><br />
-					</div>
-          <div class="form-group">
-						<label for="request_id">Request ID</label>
-						<input form="template" class="form-control" id="request_id" type="text" readonly="true" value="{{ .ID }}"><br />
-					</div>
-					<div class="form-group">
-						<label for="name">Name</label><br />
-						<input form="template" class="form-control" name="name" id="name" type="text" readonly="true" value=""><br />
-					</div>
-					<div class="form-group">
-						<label for="description">Description</label><br />
-						<input form="template" class="form-control" name="description" id="description" type="text" readonly="true" value=""><br />
-					</div>
+				<form method="POST" id="template" action="#">
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+    						<label for="template_id">Template ID</label>
+    						<input form="template" class="form-control" name="template_id" id="template_id" type="text" readonly="true" value=""><br />
+    					</div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+    						<label for="request_id">Request ID</label>
+    						<input form="template" class="form-control" id="request_id" type="text" readonly="true" value=""><br />
+    					</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+    						<label for="name">Name</label><br />
+    						<input form="template" class="form-control" name="name" id="name" type="text" readonly="true" value=""><br />
+    					</div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+    						<label for="description">Description</label><br />
+    						<input form="template" class="form-control" name="description" id="description" type="text" readonly="true" value=""><br />
+    					</div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+    						<label for="state">Request status</label><br />
+                <input form="template" class="form-control" name="state" id="state" readonly="true" type="text"></textarea>
+    					</div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+    						<label for="reason">Judge reason</label><br />
+                <div class="input-group">
+                  <textarea form="template" class="form-control" name="reason" id="reason" rows="1" readonly="true"></textarea>
+                  <div class="input-group-append" id="judge_actions" style="display:none;">
+                    <button id="button_approve" onclick="requestApprove()" disabled="" type="submit" form="template" class="btn btn-success" style="color:white;" data-toggle="tooltip" data-placement="bottom" title="Approve request"><i class="far fa-check-circle"></i></button>
+                    <button id="button_deny" onclick="requestDeny()" disabled="" type="submit" form="template" class="btn btn-danger" style="color:white;" data-toggle="tooltip" data-placement="bottom" title="Deny request"><i class="far fa-times-circle"></i></button>
+                  </div>
+                </div>
+    					</div>
+            </div>
+          </div>
+
           <div class="container page-name">
     				<h4>Survey variables</h4>
     			</div>

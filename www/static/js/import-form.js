@@ -2,10 +2,17 @@ function loadSurvey() {
   // Disable inputs
   $("#template :input").prop("readonly", true);
   // Setup variables
-  var id = parseInt($('#template_import_form_id').val());
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('template_id')) {
+    var template_id = parseInt(params.get('template_id'));
+    $('#template_id').val(template_id);
+  } else {
+    console.log("Query varibale template_id is not defined or malformed");
+    return;
+  }
   var data = new Object;
-  data["id"] = id
-  var json_data = JSON.stringify(data)
+  data["id"] = template_id;
+  var json_data = JSON.stringify(data);
   $.when(
     // Template from AWX
     $.ajax({
@@ -62,6 +69,7 @@ function loadSurvey() {
 
           if (templateImported.id == "") {
             console.log("Template not yet imported");
+            $('#template_import_form_id').val(template_id);
             $('#template_name').val(templateAvialable.name);
             $('#template_description').val(templateAvialable.description);
           } else {
@@ -71,6 +79,7 @@ function loadSurvey() {
               $('#template_icon_link').val(templateImported.icon_link);
               $('#preview_image').attr("src", templateImported.icon_link);
             }
+            $('#template_import_form_id').val(template_id);
             $('#template_name').val(templateImported.name);
             $('#template_description').val(templateImported.description);
 
@@ -103,27 +112,20 @@ function loadSurvey() {
 };
 
 // Import template
-var request;
-// Bind to the submit event of our form
 function importItem(){
-
   var form = $('#template');
-
-  // Abort any pending request
   if (request) {
     request.abort();
   }
   // Setup variables
   var serialized_data = form.serialize();
 
-  // Fire off the request
   request = $.ajax({
     url: "/api/v1/import/add",
     type: "POST",
     data: serialized_data
   });
 
-  // Callback handler that will be called on success
   request.done(function (response, textStatus, jqXHR){
     // Log a message to the console
     console.log("Import template was successful");
@@ -131,7 +133,6 @@ function importItem(){
     window.location.replace("/shop");
   });
 
-  // Callback handler that will be called on failure
   request.fail(function (jqXHR, textStatus, errorThrown){
     // Log the error to the console
     console.error(
@@ -141,13 +142,6 @@ function importItem(){
     // Display alert
     alert("Something is wrong. Detailed information in console log.")
   });
-
-  // Callback handler that will be called regardless
-  // if the request failed or succeeded
-  // request.always(function () {
-  //   // Reenable the inputs
-  //   $(obj).disabled = false;
-  // });
 
 };
 

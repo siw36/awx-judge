@@ -10,7 +10,7 @@
     <main class="container" role="main">
       <div class="container page-name">
         <h1 class="d-flex align-items-center">
-          AWX job templates
+          Tower/AWX job templates
           <div id="loader" class="spinner-border ml-auto text-primary" style="font-size:1rem;" role="status" aria-hidden="true"></div>
         </h1>
       </div>
@@ -34,14 +34,11 @@
       <template id="import_item_template">
         <tr>
           <td id="import_id"></td>
-          <td id="import_name"></td>
-          <td id="import_description"></td>
-          <td class="text-center" style="white-space: nowrap">
-            <button disabled type="submit" id="import_button_delete" data-template_id="" class="btn btn-danger" data-toggle="tooltip" data-placement="bottom" title="Delete imported version"><i class="fas fa-trash-alt"></i></button>
-            <button type="submit" id="import_button" form="" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Import"><i id="import_button_icon"class="fas fa-file-import"></i></button>
-            <form id="" action="/template-import-form" method="POST" style="display:none;">
-              <input id="import_form_id" name="import_form_id" value="" hidden="true"></input>
-            </form>
+          <td id="import_name" class="text-truncate" style="max-width:200px;"></td>
+          <td id="import_description" class="text-truncate" style="max-width:200px;"></td>
+          <td class="text-center">
+            <a id="import_button_delete" class="btn btn-danger" style="color:white;" data-toggle="tooltip" data-placement="bottom" title="Delete imported version"><i class="fas fa-trash-alt"></i></a>
+            <a id="import_button" class="btn btn-primary" style="color:white;" data-toggle="tooltip" data-placement="bottom" title="Import"><i id="import_button_icon"class="fas fa-file-import"></i></a>
           </td>
         </tr>
 

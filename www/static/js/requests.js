@@ -1,6 +1,9 @@
 var request;
 
 function loadTable() {
+  if (request) {
+    request.abort();
+  }
   request = $.ajax({
     url: '/api/v1/requests/list',
     type: "GET",
@@ -26,8 +29,9 @@ function loadTable() {
           tc.querySelector('#request_reason').textContent = item.request_reason;
           tc.querySelector('#request_state').textContent = item.state;
           tc.querySelector('#request_judge_reason').textContent = item.reason;
-          tc.querySelector('#request_button_reorder').setAttribute('data-request_id', item.id);
-          tc.querySelector('#request_button_reorder').setAttribute('onclick', 'reorderItem(this)');
+          tc.querySelector('#request_button_reorder').setAttribute('href', `/request?action=clone&source=requests&template_id=${item.template.id}&request_id=${item.id}`);
+          tc.querySelector('#request_button_view').setAttribute('href', `/request?action=view&source=requests&template_id=${item.template.id}&request_id=${item.id}`);
+          tc.querySelector('#request_button_judge').setAttribute('href', `/request?action=judge&source=requests&template_id=${item.template.id}&request_id=${item.id}`);
 
           if (item.icon != "") {
             tc.querySelector('#request_icon').setAttribute('src', item.template.icon);

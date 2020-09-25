@@ -43,10 +43,10 @@ func Serve() {
 	r.HandleFunc("/api/v1/login/internal", loginInternal).Methods("POST")
 	r.HandleFunc("/logout", logout).Methods("GET")
 	// Shop
-	r.HandleFunc("/shop", shop)
+	r.HandleFunc("/shop", shop).Methods("GET")
 	// Templates import
 	r.HandleFunc("/template-import", templateImport)
-	r.HandleFunc("/template-import-form", templateImportForm).Methods("POST")
+	r.HandleFunc("/template-import-form", templateImportForm).Methods("GET")
 	r.HandleFunc("/api/v1/import/add", templateImportAdd).Methods("POST")
 	r.HandleFunc("/api/v1/import/list", templateImportList).Methods("GET")
 	r.HandleFunc("/api/v1/import/get", templateImportGet).Methods("POST")
@@ -63,12 +63,13 @@ func Serve() {
 	r.HandleFunc("/api/v1/cart/edit", cartEdit).Methods("POST")
 	r.HandleFunc("/api/v1/cart/execute", cartToRequest).Methods("POST")
 	// Request
-	r.HandleFunc("/request", request).Methods("POST")
+	r.HandleFunc("/request", request).Methods("POST", "GET")
 	// Requests (already existant)
 	r.HandleFunc("/requests", requests).Methods("GET")
-	// r.HandleFunc("/api/v1/requests/reorder", requestReorder).Methods("POST")
+	r.HandleFunc("/api/v1/requests/reorder", requestReorder).Methods("POST")
 	r.HandleFunc("/api/v1/requests/list", requestsList).Methods("GET")
-	// make this a post value with ajax, not path param
+	r.HandleFunc("/api/v1/requests/approve", requestsApprove).Methods("POST")
+	r.HandleFunc("/api/v1/requests/deny", requestsDeny).Methods("POST")
 	r.HandleFunc("/api/v1/requests/get", requestsGet).Methods("GET")
 	// r.HandleFunc("/api/v1/requests/remove", requestRemove).Methods("POST") // Do not use this in v0.1 (too complicated)
 	// r.HandleFunc("/api/v1/requests/edit", requestEdit).Methods("POST") // Do not use this in v0.1 (too complicated)
@@ -155,20 +156,6 @@ func templateImportForm(w http.ResponseWriter, r *http.Request) {
 	if !activeSession {
 		return
 	}
-	err := r.ParseForm()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Error(err)
-		return
-	}
-
-	id := r.PostFormValue("import_form_id")
-	if _, err := strconv.Atoi(id); err != nil {
-		msg := "Request template failed: import_form_id is undefined or malformed"
-		log.Error(msg)
-		http.Error(w, msg, http.StatusInternalServerError)
-		return
-	}
 
 	// Render template
 	t, err := goTemplateLayout("www/template-import-form.gohtml")
@@ -179,7 +166,7 @@ func templateImportForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Serve site
-	err = t.Execute(w, id)
+	err = t.Execute(w, nil)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -445,21 +432,6 @@ func request(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parsing form values
-	var request model.Request
-	var err error
-	// Only parse request_id when it is posted
-	if r.PostFormValue("request_id") != "" {
-		if request.ID, err = guuid.Parse(r.PostFormValue("request_id")); err != nil {
-			log.Info("Failed to parse form request_id: ", err)
-			return
-		}
-	}
-	if request.TemplateID, err = strconv.Atoi(r.PostFormValue("template_id")); err != nil {
-		log.Info("Failed to parse form request_id: ", err)
-		return
-	}
-
 	t, err := goTemplateLayout("www/request.gohtml")
 	if err != nil {
 		log.Error(err)
@@ -467,7 +439,7 @@ func request(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Serve site
-	err = t.Execute(w, request)
+	err = t.Execute(w, nil)
 	if err != nil {
 		log.Error(err)
 	} else {
@@ -529,51 +501,6 @@ func requestTemplateFormEdit(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-
-	// Render template
-	t, err := goTemplateLayout("www/request-template-form-edit.gohtml")
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	// Serve site
-	err = t.Execute(w, request)
-	if err != nil {
-		log.Error(err)
-	} else {
-		log.Info("Parsed www/request-template-form-edit.gohtml")
-	}
-}
-
-func requestTemplateFormReorder(w http.ResponseWriter, r *http.Request) {
-	activeSession := securePageHandler(w, r)
-	if !activeSession {
-		return
-	}
-	// Get the user's cart
-	userID := getUserID(r)
-	// Create a cart for the user
-	err := mongoConnector.DBCreateCart(userID)
-	if err != nil {
-		log.Error(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Parse request_id
-	r.ParseForm()
-	if _, err := guuid.Parse(r.PostFormValue("request_id")); err != nil {
-		msg := "Edit request failed: request_id is undefined or malformed"
-		log.Error(msg)
-		http.Error(w, msg, 400)
-		return
-	}
-	// Get the request
-	var requestID guuid.UUID
-	requestID = guuid.MustParse(r.PostFormValue("request_id"))
-	log.Info("Received reorder request for ", requestID)
-	request, err := mongoConnector.DBGetRequest(userID, requestID)
 
 	// Render template
 	t, err := goTemplateLayout("www/request-template-form-edit.gohtml")
@@ -827,6 +754,50 @@ func requests(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func requestReorder(w http.ResponseWriter, r *http.Request) {
+	activeSession := securePageHandler(w, r)
+	if !activeSession {
+		return
+	}
+
+	// Parse json
+	log.Info("Parsing json for requestReorder request")
+	var request model.Request
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		log.Error("Parsing json for cartRemove request failed with error: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Cache userID
+	userID := getUserID(r)
+	// Create a cart for the user
+	err = mongoConnector.DBCreateCart(userID)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get the request
+	var newRequest model.Request
+	newRequest, err = mongoConnector.DBGetRequest(userID, request.ID)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Add the new request to the users cart
+	err = mongoConnector.DBUpdateCartAdd(userID, newRequest)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func requestsList(w http.ResponseWriter, r *http.Request) {
 	activeSession := securePageHandler(w, r)
 	if !activeSession {
@@ -859,32 +830,100 @@ func requestsGet(w http.ResponseWriter, r *http.Request) {
 	helper.JsonResponse(w, requests)
 }
 
-func reorder(w http.ResponseWriter, r *http.Request) {
+func requestsApprove(w http.ResponseWriter, r *http.Request) {
 	activeSession := securePageHandler(w, r)
 	if !activeSession {
 		return
 	}
-	// Get the request
-	r.ParseForm()
-	requestID := guuid.MustParse(r.PostFormValue("request_id"))
 	userID := getUserID(r)
-	log.Info("Getting request ", requestID)
-	request, err := mongoConnector.DBGetRequest(userID, requestID)
+
+	// Parse json
+	log.Info("Parsing json for requestsApprove request")
+	var request model.Request
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		log.Error(err)
+		log.Error("Parsing json for requestsApprove request failed with error: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// Add the request to the users cart
-	log.Info("Saving a copy of request ", requestID)
-	err = mongoConnector.DBUpdateCartAdd(userID, request)
+
+	// Apply the changes to the request
+	request.State = "approved"
+	message := "Approved by " + userID
+	request.LastMessage = message
+	request.Messages = append(request.Messages, message)
+	request.JudgeID = userID
+
+	// create db function for that
+	err = mongoConnector.DBUpdateRequest(userID, request)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
-	return
+
 }
+
+func requestsDeny(w http.ResponseWriter, r *http.Request) {
+	activeSession := securePageHandler(w, r)
+	if !activeSession {
+		return
+	}
+	userID := getUserID(r)
+
+	// Parse json
+	log.Info("Parsing json for requestsDeny request")
+	var request model.Request
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		log.Error("Parsing json for requestsDeny request failed with error: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Apply the changes to the request
+	request.State = "denied"
+	message := "Denied by " + userID
+	request.LastMessage = message
+	request.Messages = append(request.Messages, message)
+	request.JudgeID = userID
+
+	// create db function for that
+	err = mongoConnector.DBUpdateRequest(userID, request)
+	if err != nil {
+		log.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+}
+
+// func reorder(w http.ResponseWriter, r *http.Request) {
+// 	activeSession := securePageHandler(w, r)
+// 	if !activeSession {
+// 		return
+// 	}
+// 	// Get the request
+// 	r.ParseForm()
+// 	requestID := guuid.MustParse(r.PostFormValue("request_id"))
+// 	userID := getUserID(r)
+// 	log.Info("Getting request ", requestID)
+// 	request, err := mongoConnector.DBGetRequest(userID, requestID)
+// 	if err != nil {
+// 		log.Error(err)
+// 		return
+// 	}
+// 	// Add the request to the users cart
+// 	log.Info("Saving a copy of request ", requestID)
+// 	err = mongoConnector.DBUpdateCartAdd(userID, request)
+// 	if err != nil {
+// 		log.Error(err)
+// 		w.WriteHeader(http.StatusInternalServerError)
+// 		return
+// 	}
+// 	w.WriteHeader(http.StatusOK)
+// 	return
+// }
 
 func loginForm(w http.ResponseWriter, r *http.Request) {
 	// Check for active session

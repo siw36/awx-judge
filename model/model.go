@@ -38,6 +38,9 @@ type Request struct {
 	RequestReason string     `json:"request_reason" bson:"request_reason"`
 	Reason        string     `json:"reason" bson:"reason"`
 	State         string     `json:"state" bson:"state"`
+	LastMessage   string     `json:"last_message" bson:"last_message"`
+	Messages      []string   `json:"messages" bson:"messages"`
+	JudgeID       string     `json:"judge_id" bson:"judge_id"`
 	TemplateID    int        `json:"template_id" bson:"template_id"`
 	Template      Template   `json:"template" bson:"template"`
 	CreatedAt     time.Time  `json:"created_at" bson:"created_at"`

@@ -2,10 +2,17 @@ function loadSurvey() {
   // Disable inputs
   $("#template :input").prop("readonly", true);
   // Setup variables
-  var id = parseInt($('#template_id').val());
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('template_id')) {
+    template_id = parseInt(params.get('template_id'));
+    $('#template_id').val(template_id);
+  } else {
+    console.log("Query varibale template_id is not defined or malformed");
+    return;
+  }
   var data = new Object;
-  data["id"] = id
-  var json_data = JSON.stringify(data)
+  data["id"] = template_id;
+  var json_data = JSON.stringify(data);
   $.when(
     // Template from DB, also containing survey spec
     $.ajax({
@@ -130,95 +137,188 @@ function loadSurvey() {
       } else {
         alert("HTML5 templating does not work with your browser")
       }
-      // Load data into inputs
-      // Get the request ID
-      var request_id = $('#request_id').val();
-      if (request_id == "00000000-0000-0000-0000-000000000000") {
-        return
-      }
-      // Get the action type
-      const params = new URLSearchParams(window.location.search);
-      var action = 'none';
-      if (params.has('action')) {
-        action = params.get('action');
-      }
-
-      // Get the user cart
-      request = $.ajax({
-        url: '/api/v1/cart/list',
-        type: "GET",
-      });
-
-      // Callback handler that will be called on success
-      request.done(function (response, textStatus, jqXHR){
-        if (response.requests.length <= 0) {
-          console.log("User cart is empty");
-          return
-        }
-        $.each(response.requests, function(i, response_request) {
-          if( response_request.id == request_id ) {
-            // Set the request reason
-            $('#request_reason').val(response_request.request_reason);
-            $.each(response_request.template.spec, function(a, spec) {
-              switch (spec.type) {
-                case "textarea":
-                  $(`textarea[name="${spec.variable}"]`).val(spec.value);
-                  break;
-                case "multiplechoice":
-                  $(`option[value="${spec.value}"]`).prop('selected', true);
-                  break;
-                case "multiselect":
-                  choices = spec.value.split("\n");
-                  $.each(choices, function(i, choice) {
-                    if(choice != ""){
-                      $(`input[name=${spec.variable}][value*=${choice}]`).prop('checked', true);
-                    }
-                  })
-                  break;
-                default:
-                  $(`input[name="${spec.variable}"]`).val(spec.value);
-                  break;
-              }
-            })
-            return false;
-          }
-        })
-        switch (action) {
-          case "view":
-            $('h1').text('View request');
-            $('#template :input').prop("disabled", true);
-            $('#request_submit').text('Back to cart');
-            $('#request_submit').prop('type', 'button');
-            $('#request_submit').attr('onclick', 'window.location.href="/cart"');
-            break;
-          case "edit":
-            $('h1').text('Edit request');
-            $('#request_submit').text('Update');
-            $('#request_submit').attr('onclick', 'edit()');
-            $('#request_id').prop('name', 'request_id');
-            break;
-          case "clone":
-            $('h1').text('Clone request');
-            $('#request_submit').text('Add clone to cart');
-            $('#template').prop('action', '/api/v1/cart/add');
-            break;
-          default:
-            break;
-        }
-      });
+      switchSourceAction();
     }
   });
   $('#request_reason').prop('readonly', false);
   $('#loader').hide('slow', function(){ $('#loader').remove(); });
 };
 
-function edit(){
+function loadData(source){
+  // Load data into inputs
+  // Get the request ID
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('request_id')) {
+    request_id = params.get('request_id');
+    $('#request_id').val(request_id);
+  } else {
+    return;
+  }
+
+  // Get the user cart
+  request = $.ajax({
+    url: `/api/v1/${source}/list`,
+    source: "GET",
+  });
+
+  // Format data based on source
+  var data
+  request.done(function (response, textStatus, jqXHR){
+    if (response == null || response.length <= 0) {
+      console.log("No requests found");
+      return
+    }
+    switch (source) {
+      case "cart":
+        data = response.requests;
+        break;
+      case "requests":
+        data = response;
+        break;
+      default:
+        break;
+    }
+    $.each(data, function(i, response_request) {
+      if( response_request.id == request_id ) {
+        // Set the request reason
+        $('#request_reason').val(response_request.request_reason);
+        $('#reason').val(response_request.reason);
+        $('#state').val(response_request.state);
+        $.each(response_request.template.spec, function(a, spec) {
+          switch (spec.type) {
+            case "textarea":
+              $(`textarea[name="${spec.variable}"]`).val(spec.value);
+              break;
+            case "multiplechoice":
+              $(`option[value="${spec.value}"]`).prop('selected', true);
+              break;
+            case "multiselect":
+              choices = spec.value.split("\n");
+              $.each(choices, function(i, choice) {
+                if(choice != ""){
+                  $(`input[name=${spec.variable}][value*=${choice}]`).prop('checked', true);
+                }
+              })
+              break;
+            default:
+              $(`input[name="${spec.variable}"]`).val(spec.value);
+              break;
+          }
+        })
+        return false;
+      }
+    })
+  });
+}
+
+function switchSourceAction(){
+  // Get the action and source
+  const params = new URLSearchParams(window.location.search);
+  var action = 'none';
+  if (params.has('action')) {
+    action = params.get('action');
+  }
+  var source = 'none';
+  if (params.has('source')) {
+    source = params.get('source');
+  }
+  switch (true) {
+    // shop
+    case (source == "shop" && action == "create"):
+      $('h1').text('Create request');
+      $('#request_submit').text('Add request to cart');
+      $('#request_submit').attr('onclick', 'requestCreate()');
+      break;
+
+    // cart
+    case (source == "cart" && action == "view"):
+      $('h1').text('View request');
+      loadData(source);
+      $('#template :input').prop("disabled", true);
+      $('#request_submit').text('Back to cart');
+      $('#request_submit').prop('type', 'button');
+      $('#request_submit').attr('onclick', 'window.location.href="/cart"');
+      break;
+    case (source == "cart" && action == "edit"):
+      $('h1').text('Edit request');
+      loadData(source);
+      $('#request_submit').text('Update');
+      $('#request_submit').attr('onclick', 'requestEdit()');
+      $('#request_id').prop('name', 'request_id');
+      break;
+    case (source == "cart" && action == "clone"):
+      $('h1').text('Clone request');
+      loadData(source);
+      $('#request_submit').text('Add clone to cart');
+      $('#request_submit').attr('onclick', 'requestClone()');
+      break;
+
+    // reuqests
+    case (source == "requests" && action == "view"):
+      $('h1').text('View request');
+      loadData(source);
+      $('#template :input').prop("disabled", true);
+      $('#request_submit').text('Back to requests');
+      $('#request_submit').prop('type', 'button');
+      $('#request_submit').attr('onclick', 'window.location.href="/requests"');
+      break;
+    case (source == "requests" && action == "clone"):
+      $('h1').text('Clone request');
+      loadData(source);
+      $('#request_submit').text('Add clone to cart');
+      $('#request_submit').prop('type', 'button');
+      $('#request_submit').attr('onclick', 'requestClone()');
+      break;
+    case (source == "requests" && action == "judge"):
+      // check if user is allowed to judge
+      $('h1').text('Judge request');
+      loadData(source);
+      $('#template :input').prop("disabled", true);
+      $('#judge_actions').show();
+      $('#reason').attr('readonly', false);
+      $('#reason').attr('disabled', false);
+      $('#reason').attr('required', true);
+      $('#button_approve').attr('disabled', false);
+      $('#button_deny').attr('disabled', false);
+      $('#request_submit').text('Back to requests');
+      $('#request_submit').prop('type', 'button');
+      $('#request_submit').attr('onclick', 'window.location.href="/requests"');
+      break;
+    default:
+      break;
+  }
+}
+
+function requestCreate(){
   event.preventDefault();
 
   var serializedData = $('#template').serialize();
   $("#template :input").prop("readonly", true);
 
-  console.log(serializedData);
+  request = $.ajax({
+    url: "/api/v1/cart/add",
+    type: "POST",
+    data: serializedData
+  });
+
+  request.done(function (response, textStatus, jqXHR){
+    console.log("Edit successful");
+    window.location.href = "/cart";
+  });
+
+  request.fail(function (jqXHR, textStatus, errorThrown){
+    console.error(
+      "The following error occurred: "+
+      textStatus, errorThrown
+    );
+  });
+};
+
+function requestEdit(){
+  event.preventDefault();
+
+  var serializedData = $('#template').serialize();
+  $("#template :input").prop("readonly", true);
 
   request = $.ajax({
     url: "/api/v1/cart/edit",
@@ -229,6 +329,81 @@ function edit(){
   request.done(function (response, textStatus, jqXHR){
     console.log("Edit successful");
     window.location.href = "/cart";
+  });
+
+  request.fail(function (jqXHR, textStatus, errorThrown){
+    console.error(
+      "The following error occurred: "+
+      textStatus, errorThrown
+    );
+  });
+};
+
+function requestClone(){
+  event.preventDefault();
+
+  var serializedData = $('#template').serialize();
+  $("#template :input").prop("readonly", true);
+
+  request = $.ajax({
+    url: "/api/v1/cart/add",
+    type: "POST",
+    data: serializedData
+  });
+
+  request.done(function (response, textStatus, jqXHR){
+    console.log("Clone successful");
+    window.location.href = "/cart";
+  });
+
+  request.fail(function (jqXHR, textStatus, errorThrown){
+    console.error(
+      "The following error occurred: "+
+      textStatus, errorThrown
+    );
+  });
+};
+
+function requestApprove(){
+  event.preventDefault();
+
+  var serializedData = $('#template').serialize();
+  $("#template :input").prop("readonly", true);
+
+  request = $.ajax({
+    url: "/api/v1/requests/approve",
+    type: "POST",
+    data: serializedData
+  });
+
+  request.done(function (response, textStatus, jqXHR){
+    console.log("Judging successful");
+    window.location.href = "/requests";
+  });
+
+  request.fail(function (jqXHR, textStatus, errorThrown){
+    console.error(
+      "The following error occurred: "+
+      textStatus, errorThrown
+    );
+  });
+};
+
+function requestDeny(){
+  event.preventDefault();
+
+  var serializedData = $('#template').serialize();
+  $("#template :input").prop("readonly", true);
+
+  request = $.ajax({
+    url: "/api/v1/requests/deny",
+    type: "POST",
+    data: serializedData
+  });
+
+  request.done(function (response, textStatus, jqXHR){
+    console.log("Judging successful");
+    window.location.href = "/requests";
   });
 
   request.fail(function (jqXHR, textStatus, errorThrown){

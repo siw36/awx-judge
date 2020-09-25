@@ -14,7 +14,7 @@
           <div id="loader" class="spinner-border ml-auto text-primary" style="font-size:1rem;" role="status" aria-hidden="true"></div>
         </h1>
       </div>
-		  <table id="cart" class="table table-striped table-hover table-align-middle">
+		  <table id="cart" class="table table-striped table-hover">
         <tbody>
           <!--Dynamically filled by HTML5 template-->
         </tbody>
@@ -32,22 +32,10 @@
           <td id="cart_name" class="text-truncate"></td>
           <td id="cart_reason" class="text-truncate" style="max-width:150px;"></td>
           <td class="text-center">
-            <button type="submit" id="cart_button_view" form="" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="View request"><i class="far fa-eye"></i></button>
-            <button type="submit" id="cart_button_clone" form="" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Clone request"><i class="far fa-clone"></i></button>
-            <button type="submit" id="cart_button_edit" form="" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Edit request"><i class="far fa-edit"></i></button>
-            <button type="button" id="cart_button_delete" data-request_id="" class="btn btn-danger" data-toggle="tooltip" data-placement="bottom" title="Delete request"><i class="far fa-trash-alt"></i></button>
-            <form id="view" action="/request?action=view" method="POST" style="display:none;">
-              <input id="cart_template_id_view" name="template_id" value="#" hidden="true"></input>
-              <input id="cart_request_id_view" name="request_id" value="#" hidden="true"></input>
-            </form>
-            <form id="edit" action="/request?action=edit" method="POST" style="display:none;">
-              <input id="cart_template_id_edit" name="template_id" value="#" hidden="true"></input>
-              <input id="cart_request_id_edit" name="request_id" value="#" hidden="true"></input>
-            </form>
-            <form id="clone" action="/request?action=clone" method="POST" style="display:none;">
-              <input id="cart_template_id_clone" name="template_id" value="#" hidden="true"></input>
-              <input id="cart_request_id_clone" name="request_id" value="#" hidden="true"></input>
-            </form>
+            <a id="cart_button_view" class="btn btn-primary" style="color:white;" data-toggle="tooltip" data-placement="bottom" title="View request"><i class="far fa-eye"></i></a>
+            <a id="cart_button_clone" class="btn btn-primary" style="color:white;" data-toggle="tooltip" data-placement="bottom" title="Clone request"><i class="far fa-clone"></i></a>
+            <a id="cart_button_edit" class="btn btn-primary" style="color:white;" data-toggle="tooltip" data-placement="bottom" title="Edit request"><i class="far fa-edit"></i></a>
+            <a id="cart_button_delete" class="btn btn-danger" style="color:white;" data-toggle="tooltip" data-placement="bottom" title="Delete request"><i class="far fa-trash-alt"></i></a>
           </td>
         </tr>
     </template>

@@ -344,4 +344,25 @@ func DBGetRequest(userID string, requestID guuid.UUID) (model.Request, error) {
 	return result, nil
 }
 
-// Delete a request
+func DBUpdateRequest(userID string, request model.Request) error {
+	collection := Client.Database(Config.Mongo.Database).Collection("requests")
+	opts := options.Update().SetUpsert(true)
+	filter := bson.D{primitive.E{Key: "user_id", Value: userID}, primitive.E{Key: "id", Value: request.ID}}
+	update := bson.D{{"$set", bson.D{{"requests.$", request}}}}
+
+	result, err := collection.UpdateOne(context.TODO(), filter, update, opts)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	if result.MatchedCount != 0 {
+		log.Info("Updated request for user ", userID)
+		return nil
+	}
+	if result.UpsertedCount != 0 {
+		log.Info("Added request to cart for user ", userID)
+		return nil
+	}
+	return nil
+}

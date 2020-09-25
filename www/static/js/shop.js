@@ -24,7 +24,7 @@ function loadShopItems() {
           // Setting all requeired elements
           tc.querySelector('#card_name').textContent = item.name;
           tc.querySelector('#card_description').textContent = item.description;
-          tc.querySelector('#template_id').value = item.id;
+          tc.querySelector('#card_button').setAttribute('href', '/request?action=create&source=shop&template_id=' + item.id);
 
           if (item.icon != "") {
             tc.querySelector('#card_icon').setAttribute('src', item.icon);
