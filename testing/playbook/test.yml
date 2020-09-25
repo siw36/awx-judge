@@ -1,0 +1,31 @@
+---
+- hosts: localhost
+  gather_facts: false
+  become: false
+  # vars:
+  #   varText: xxx
+  #   varPassword: xxx
+  #   varInteger: xxx
+  #   varFloat: xxx
+  #   varMultiplechoice: xxx
+  #   varMultiselect: xxx
+  tasks:
+    - name: Print all survey variables
+      debug:
+        msg: "Variable type: {{ item.type }}; Variable value: {{ item.value }}"
+      loop:
+        - type: text
+          value: "{{ varText }}"
+        - type: password
+          value: "{{ varPassword }}"
+        - type: integer
+          value: "{{ varInteger }}"
+        - type: float
+          value: "{{ varFloat }}"
+        - type: multiplechoice
+          value: "{{ varMultiplechoice }}"
+        - type: multiselect
+          value: "{{ varMultiselect }}"
+
+    - pause:
+        seconds: 30

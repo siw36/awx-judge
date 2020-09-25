@@ -1,0 +1,37 @@
+<html>
+  <head>
+  	{{ template "sources.gohtml" }}
+  </head>
+  <body class="d-flex flex-column h-100">
+    <header>
+      {{ template "header.gohtml" }}
+    </header>
+
+    <main class="container" role="main">
+      <div class="container page-name">
+        <h1 class="d-flex align-items-center">
+          Available services
+          <div id="loader" class="spinner-border ml-auto text-primary" style="font-size:1rem;" role="status" aria-hidden="true"></div>
+        </h1>
+      </div>
+      <div class="card-columns" id="shop">
+        <!--Dynamically filled by HTML5 tempalte-->
+      </div>
+      <template id="shop_card_template">
+        <div class="card" style="width: 18rem;">
+          <div class="card-icon">
+            <img id="card_icon" src="/static/logo.png" class="img-fluid" alt="icon">
+          </div>
+          <div class="card-body">
+            <h5 id="card_name" class="card-title">Name</h5>
+            <p id="card_description"class="card-text">Description</p>
+            <a id="card_button" class="btn btn-primary">Add to cart</a>
+          </div>
+        </div>
+      </template>
+    </main>
+  <footer class="footer mt-auto py-3">
+    {{ template "footer.gohtml" }}
+  </footer>
+  <script src="/static/js/shop.js"></script>
+</html>

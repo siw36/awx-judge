@@ -1,0 +1,18 @@
+---
+mongoConnection:
+  connectionString: "mongodb://localhost:27017,localhost:27018,localhost:27019/admin?replicaSet=my-mongo-set"
+  database: "go-awx-approver"
+
+awxConnection:
+  host: "https://awx.my-domain.com"
+  user: "go-awx-approver"
+  password: "xxxx"
+
+oidConnection:
+  name: "Azure"
+  discoveryEndpoint: "https://login.microsoftonline.com/{tenantid}/v2.0"
+  clientID: "go-awx-approver"
+  clientSecret: "xxxx"
+  redirectURL: "https://self-service.my-domain.com/login"
+
+adminPassword: "initial admin user password"

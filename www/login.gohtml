@@ -1,0 +1,30 @@
+<html>
+  <head>
+  	{{ template "sources.gohtml" }}
+  </head>
+  <body class="d-flex flex-column h-100">
+
+    <main class="container d-flex justify-content-center" role="main">
+      <div class="container-xs" style="width:400px;">
+        <img src="/static/logo.png" class="img-fluid" alt="logo">
+        <form id="login-internal" name="login-internal" action="/api/v1/login/internal" method="POST">
+          <div class="form-group">
+            <label for="name">User name</label>
+            <input type="text" class="form-control" id="userID" name="userID" required="true" autofocus="true">
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" class="form-control" id="password" name="password" required="true">
+          </div>
+          <input type="submit" class="btn btn-primary" value="Login"/>
+        </form>
+        <div id="alert" class="alert" role="alert" style="display:none;">
+          <!-- dynamic text -->
+        </div>
+      </div>
+    </main>
+
+  <footer class="footer mt-auto py-3">
+    {{ template "footer.gohtml" }}
+  </footer>
+</html>
