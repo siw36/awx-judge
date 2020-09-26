@@ -839,22 +839,32 @@ func requestsApprove(w http.ResponseWriter, r *http.Request) {
 
 	// Parse json
 	log.Info("Parsing json for requestsApprove request")
-	var request model.Request
-	err := json.NewDecoder(r.Body).Decode(&request)
+	var changes model.Request
+	err := json.NewDecoder(r.Body).Decode(&changes)
 	if err != nil {
 		log.Error("Parsing json for requestsApprove request failed with error: ", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// Get the user request
+	request, err := mongoConnector.DBGetRequest(userID, changes.ID)
+
+	if request.State != "pending" {
+		log.Error("Request state is not pending. Approval canceled.")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	// Apply the changes to the request
+	request.Reason = changes.Reason
 	request.State = "approved"
 	message := "Approved by " + userID
 	request.LastMessage = message
 	request.Messages = append(request.Messages, message)
 	request.JudgeID = userID
 
-	// create db function for that
+	// Write the updated request to DB
 	err = mongoConnector.DBUpdateRequest(userID, request)
 	if err != nil {
 		log.Error(err)

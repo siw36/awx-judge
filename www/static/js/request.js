@@ -94,8 +94,11 @@ function loadSurvey() {
               if(survey.default != ""){
                 variable_input.value = survey.default;
               }
-              variable_input.setAttribute('pattern', survey.regex);
-              variable_regex.innerHTML = 'Pattern: ' + survey.regex;
+              if(survey.regex != ""){
+                variable_input.setAttribute('pattern', survey.regex);
+                variable_regex.innerHTML = 'Pattern: ' + survey.regex;
+                variable_regex_div.style.display = '';
+              }
               break;
             case "textarea":
               variable_input = tc.querySelector("textarea");
@@ -109,8 +112,11 @@ function loadSurvey() {
               if(survey.default != ""){
                 variable_input.value = survey.default;
               }
-              variable_input.setAttribute('pattern', survey.regex);
-              variable_regex.innerHTML = 'Pattern: ' + survey.regex;
+              if(survey.regex != ""){
+                variable_input.setAttribute('pattern', survey.regex);
+                variable_regex.innerHTML = 'Pattern: ' + survey.regex;
+                variable_regex_div.style.display = '';
+              }
               break;
             case "integer":
             case "float":
@@ -125,6 +131,11 @@ function loadSurvey() {
               }
               if(survey.default != ""){
                 variable_input.value = survey.default;
+              }
+              if(survey.regex != ""){
+                variable_input.setAttribute('pattern', survey.regex);
+                variable_regex.innerHTML = 'Pattern: ' + survey.regex;
+                variable_regex_div.style.display = '';
               }
               variable_input.setAttribute('min', survey.min);
               variable_input.setAttribute('max', survey.max);
@@ -184,6 +195,12 @@ function loadData(source){
         $('#request_reason').val(response_request.request_reason);
         $('#reason').val(response_request.reason);
         $('#state').val(response_request.state);
+
+        $('#user_id').val(response_request.user_id);
+        $('#judge_id').val(response_request.judge_id);
+        $('#last_message').val(response_request.last_message);
+        $('#updated_at').val(response_request.updated_at);
+
         $.each(response_request.template.spec, function(a, spec) {
           switch (spec.type) {
             case "textarea":
@@ -226,8 +243,9 @@ function switchSourceAction(){
     // shop
     case (source == "shop" && action == "create"):
       $('h1').text('Create request');
-      $('#request_submit').text('Add request to cart');
-      $('#request_submit').attr('onclick', 'requestCreate()');
+      $('#request_submit')
+        .text('Add request to cart')
+        .attr('onclick', 'requestCreate()');
       break;
 
     // cart
@@ -235,22 +253,25 @@ function switchSourceAction(){
       $('h1').text('View request');
       loadData(source);
       $('#template :input').prop("disabled", true);
-      $('#request_submit').text('Back to cart');
-      $('#request_submit').prop('type', 'button');
-      $('#request_submit').attr('onclick', 'window.location.href="/cart"');
+      $('#request_submit')
+        .text('Back to cart')
+        .prop('type', 'button')
+        .attr('onclick', 'window.location.href="/cart"');
       break;
     case (source == "cart" && action == "edit"):
       $('h1').text('Edit request');
       loadData(source);
-      $('#request_submit').text('Update');
-      $('#request_submit').attr('onclick', 'requestEdit()');
+      $('#request_submit')
+        .text('Update')
+        .attr('onclick', 'requestEdit()');
       $('#request_id').prop('name', 'request_id');
       break;
     case (source == "cart" && action == "clone"):
       $('h1').text('Clone request');
       loadData(source);
-      $('#request_submit').text('Add clone to cart');
-      $('#request_submit').attr('onclick', 'requestClone()');
+      $('#request_submit')
+        .text('Add clone to cart')
+        .attr('onclick', 'requestClone()');
       break;
 
     // reuqests
@@ -258,16 +279,18 @@ function switchSourceAction(){
       $('h1').text('View request');
       loadData(source);
       $('#template :input').prop("disabled", true);
-      $('#request_submit').text('Back to requests');
-      $('#request_submit').prop('type', 'button');
-      $('#request_submit').attr('onclick', 'window.location.href="/requests"');
+      $('#request_submit')
+        .text('Back to requests')
+        .prop('type', 'button')
+        .attr('onclick', 'window.location.href="/requests"');
       break;
     case (source == "requests" && action == "clone"):
       $('h1').text('Clone request');
       loadData(source);
-      $('#request_submit').text('Add clone to cart');
-      $('#request_submit').prop('type', 'button');
-      $('#request_submit').attr('onclick', 'requestClone()');
+      $('#request_submit')
+        .text('Add clone to cart')
+        .prop('type', 'button')
+        .attr('onclick', 'requestClone()');
       break;
     case (source == "requests" && action == "judge"):
       // check if user is allowed to judge
@@ -275,14 +298,16 @@ function switchSourceAction(){
       loadData(source);
       $('#template :input').prop("disabled", true);
       $('#judge_actions').show();
-      $('#reason').attr('readonly', false);
-      $('#reason').attr('disabled', false);
-      $('#reason').attr('required', true);
+      $('#reason')
+        .attr('readonly', false)
+        .attr('disabled', false)
+        .attr('required', true);
       $('#button_approve').attr('disabled', false);
       $('#button_deny').attr('disabled', false);
-      $('#request_submit').text('Back to requests');
-      $('#request_submit').prop('type', 'button');
-      $('#request_submit').attr('onclick', 'window.location.href="/requests"');
+      $('#request_submit')
+        .text('Back to requests')
+        .prop('type', 'button')
+        .attr('onclick', 'window.location.href="/requests"');
       break;
     default:
       break;
@@ -367,13 +392,20 @@ function requestClone(){
 function requestApprove(){
   event.preventDefault();
 
-  var serializedData = $('#template').serialize();
+  $('#button_approve').prop('disabled', true);
+  $('#button_deny').prop('disabled', true);
   $("#template :input").prop("readonly", true);
+
+  var data = new Object;
+  data['id'] = $('#request_id').val();
+  data['reason'] = $('#reason').val();
+  var json_data = JSON.stringify(data);
 
   request = $.ajax({
     url: "/api/v1/requests/approve",
     type: "POST",
-    data: serializedData
+    contentType: "application/json; charset=utf-8",
+    data: json_data
   });
 
   request.done(function (response, textStatus, jqXHR){
@@ -392,13 +424,20 @@ function requestApprove(){
 function requestDeny(){
   event.preventDefault();
 
-  var serializedData = $('#template').serialize();
+  $('#button_approve').prop('disabled', true);
+  $('#button_deny').prop('disabled', true);
   $("#template :input").prop("readonly", true);
+
+  var data = new Object;
+  data['id'] = $('#request_id').val();
+  data['reason'] = $('#reason').val();
+  var json_data = JSON.stringify(data);
 
   request = $.ajax({
     url: "/api/v1/requests/deny",
     type: "POST",
-    data: serializedData
+    contentType: "application/json; charset=utf-8",
+    data: json_data
   });
 
   request.done(function (response, textStatus, jqXHR){

@@ -31,7 +31,12 @@ function loadTable() {
           tc.querySelector('#request_judge_reason').textContent = item.reason;
           tc.querySelector('#request_button_reorder').setAttribute('href', `/request?action=clone&source=requests&template_id=${item.template.id}&request_id=${item.id}`);
           tc.querySelector('#request_button_view').setAttribute('href', `/request?action=view&source=requests&template_id=${item.template.id}&request_id=${item.id}`);
-          tc.querySelector('#request_button_judge').setAttribute('href', `/request?action=judge&source=requests&template_id=${item.template.id}&request_id=${item.id}`);
+          if (item.state != "pending") {
+            tc.querySelector('#request_button_judge').remove();
+          } else {
+            tc.querySelector('#request_button_judge').removeAttribute('disabled');
+            tc.querySelector('#request_button_judge').setAttribute('href', `/request?action=judge&source=requests&template_id=${item.template.id}&request_id=${item.id}`);
+          }
 
           if (item.icon != "") {
             tc.querySelector('#request_icon').setAttribute('src', item.template.icon);

@@ -162,6 +162,7 @@ func DBDeleteCart(userID string) error {
 
 // Get a cart
 func DBGetCart(userID string) (model.Cart, error) {
+	DBCreateCart(userID)
 	log.Info("Getting user cart")
 	var result model.Cart
 	// Switch collection
@@ -346,9 +347,11 @@ func DBGetRequest(userID string, requestID guuid.UUID) (model.Request, error) {
 
 func DBUpdateRequest(userID string, request model.Request) error {
 	collection := Client.Database(Config.Mongo.Database).Collection("requests")
-	opts := options.Update().SetUpsert(true)
-	filter := bson.D{primitive.E{Key: "user_id", Value: userID}, primitive.E{Key: "id", Value: request.ID}}
-	update := bson.D{{"$set", bson.D{{"requests.$", request}}}}
+	opts := options.Update().SetUpsert(false)
+	filter := bson.D{primitive.E{Key: "id", Value: request.ID}}
+	update := bson.M{
+		"$set": request,
+	}
 
 	result, err := collection.UpdateOne(context.TODO(), filter, update, opts)
 	if err != nil {
