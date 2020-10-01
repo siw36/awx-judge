@@ -116,6 +116,22 @@ func ValidUrl(toTest string) bool {
 	if err != nil {
 		return false
 	}
-
 	return true
+}
+
+func ExtraVars(request model.Request) ([]byte, error) {
+	// Format survey variables
+	log.Info("Building extra_vars json from request")
+	var surveyVars model.SurveyVars
+	m := make(map[string]interface{})
+	for _, item := range request.Template.Survey {
+		m[item.Variable] = item.Value
+	}
+	surveyVars.ExtraVars = m
+	jsonString, err := json.Marshal(surveyVars)
+	if err != nil {
+		log.Error(err)
+		return jsonString, err
+	}
+	return jsonString, err
 }

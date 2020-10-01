@@ -1,9 +1,9 @@
-package webServer
+package web
 
 import (
 	"net/http"
 
-	mongoConnector "../mongoConnector"
+	db "../db"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -53,7 +53,7 @@ func loginInternal(w http.ResponseWriter, r *http.Request) {
 		log.Info("Successful internal login from " + r.RemoteAddr)
 		setSession(w, userID)
 		// Create a cart if none is present
-		mongoConnector.DBCreateCart(userID)
+		db.CreateCart(userID)
 		http.Redirect(w, r, "/shop", 302)
 	} else {
 		log.Error("Failed internal login from " + r.RemoteAddr)

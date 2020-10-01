@@ -1,4 +1,4 @@
-package awxConnector
+package awx
 
 import (
 	"encoding/json"
@@ -66,3 +66,33 @@ func GetSurvey(ID int) ([]model.Survey, error) {
 	defer response.Body.Close()
 	return template.Survey, err
 }
+
+func JobTemplateLaunch(id int, extraVars []byte) (jobID int, err error) {
+	log.Info("Launching job template  " + strconv.Itoa(id))
+	var response model.JobTemplateLaunchResponse
+	client := &http.Client{}
+	request, err := http.NewRequest("POST", Config.AWX.Host+"/api/v2/job_templates/"+strconv.Itoa(id)+"/launch/", nil)
+	request.SetBasicAuth(Config.AWX.User, Config.AWX.Password)
+	if err != nil {
+		log.Error("Failed to construct request for launch job template with error: ", err)
+		return 0, err
+	}
+	responseRaw, err := client.Do(request)
+	if err != nil {
+		log.Error("Failed to launch job template with error: ", err)
+		return 0, err
+	}
+	if responseRaw.StatusCode == 201 {
+		json.NewDecoder(responseRaw.Body).Decode(&response)
+		log.Info("Successfully launched job template  " + strconv.Itoa(id))
+		defer responseRaw.Body.Close()
+		return response.Job, err
+	} else {
+		log.Error("Failed to launch job template with error: ", responseRaw.Body)
+		return 0, err
+	}
+}
+
+// func JobGet(request model.Request) error {
+//
+// }

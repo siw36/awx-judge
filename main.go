@@ -1,12 +1,12 @@
 package main
 
 import (
-	awxConnector "./awxConnector"
+	awx "./awx"
 	helper "./helper"
 	model "./model"
-	mongoConnector "./mongoConnector"
+	db "./db"
 	oidcConnector "./oidcConnector"
-	webServer "./webServer"
+	web "./web"
 	log "github.com/Sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -22,17 +22,21 @@ func init() {
 	helper.ReadConfigEnv(&Config)
 
 	// Inject in other packages
-	awxConnector.Config = Config
-	mongoConnector.Config = Config
-	webServer.Config = Config
+	awx.Config = Config
+	db.Config = Config
+	web.Config = Config
 	oidcConnector.OIDConnection = Config.OIDC
 
 	// Establish MongoDB connection
 	var Client *mongo.Client
-	Client = mongoConnector.DBConnect(Config.Mongo.ConnectionString, Config.Mongo.Database)
-	mongoConnector.Client = Client
+	Client = db.Connect(Config.Mongo.ConnectionString, Config.Mongo.Database)
+	db.Client = Client
 }
 
 func main() {
-	webServer.Serve()
+	// // testing
+	// request, _ := db.GetRequest("admin", guuid.MustParse("0997457f-59da-4faa-a1b0-7cf4aae38ad4"))
+	// awx.LaunchJob(request)
+
+	web.Serve()
 }

@@ -1,4 +1,4 @@
-package mongoConnector
+package db
 
 import (
 	"context"
@@ -22,7 +22,7 @@ var (
 )
 
 // Database connection
-func DBConnect(connectionString string, database string) *mongo.Client {
+func Connect(connectionString string, database string) *mongo.Client {
 	clientOptions := options.Client().ApplyURI(connectionString)
 	log.Info("Trying to connect to MongoDB")
 	client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -38,7 +38,7 @@ func DBConnect(connectionString string, database string) *mongo.Client {
 	return client
 }
 
-func DBDisconnect(client *mongo.Client) {
+func Disonnect(client *mongo.Client) {
 	err := (client).Disconnect(context.TODO())
 
 	if err != nil {
@@ -49,7 +49,7 @@ func DBDisconnect(client *mongo.Client) {
 }
 
 // Create a job template
-func DBCreateTemplate(template model.Template) error {
+func CreateTemplate(template model.Template) error {
 	// Switch collection
 	collection := Client.Database(Config.Mongo.Database).Collection("templates")
 	// Add metadata
@@ -69,7 +69,7 @@ func DBCreateTemplate(template model.Template) error {
 }
 
 // Get a job Template
-func DBGetTemplate(id int) (model.Template, error) {
+func GetTemplate(id int) (model.Template, error) {
 	filter := bson.D{primitive.E{"id", id}}
 	opts := options.FindOne().SetSort(bson.D{primitive.E{Key: "name", Value: 1}})
 	var result model.Template
@@ -86,7 +86,7 @@ func DBGetTemplate(id int) (model.Template, error) {
 }
 
 // Create a job template
-func DBRemoveTemplate(templateID int) error {
+func RemoveTemplate(templateID int) error {
 	// Switch collection
 	collection := Client.Database(Config.Mongo.Database).Collection("templates")
 	// Remove the job template from DB
@@ -101,7 +101,7 @@ func DBRemoveTemplate(templateID int) error {
 	return nil
 }
 
-func DBGetTemplateAll() ([]model.Template, error) {
+func GetTemplateAll() ([]model.Template, error) {
 	filter := bson.D{}
 	opts := options.Find().SetSort(bson.D{primitive.E{Key: "name", Value: 1}})
 	var results []model.Template
@@ -120,7 +120,7 @@ func DBGetTemplateAll() ([]model.Template, error) {
 }
 
 // Create a new cart
-func DBCreateCart(userID string) error {
+func CreateCart(userID string) error {
 	// Switch collection
 	collection := Client.Database(Config.Mongo.Database).Collection("carts")
 	// Add metadata
@@ -145,7 +145,7 @@ func DBCreateCart(userID string) error {
 }
 
 // Delete the users cart
-func DBDeleteCart(userID string) error {
+func DeleteCart(userID string) error {
 	// Switch collection
 	collection := Client.Database(Config.Mongo.Database).Collection("carts")
 	log.Info("Deleting cart for user ", userID)
@@ -156,13 +156,13 @@ func DBDeleteCart(userID string) error {
 		log.Error(err)
 		return err
 	}
-	DBCreateCart(userID)
+	CreateCart(userID)
 	return nil
 }
 
 // Get a cart
-func DBGetCart(userID string) (model.Cart, error) {
-	DBCreateCart(userID)
+func GetCart(userID string) (model.Cart, error) {
+	CreateCart(userID)
 	log.Info("Getting user cart")
 	var result model.Cart
 	// Switch collection
@@ -182,9 +182,9 @@ func DBGetCart(userID string) (model.Cart, error) {
 }
 
 // Update a cart - add request
-func DBUpdateCartAdd(userID string, request model.Request) error {
+func UpdateCartAdd(userID string, request model.Request) error {
 	// Get the current cart
-	cart, err := DBGetCart(userID)
+	cart, err := GetCart(userID)
 	if err != nil {
 		return err
 	}
@@ -208,9 +208,9 @@ func DBUpdateCartAdd(userID string, request model.Request) error {
 }
 
 // Update a cart - remove request
-func DBUpdateCartRemove(userID string, requestID guuid.UUID) error {
+func UpdateCartRemove(userID string, requestID guuid.UUID) error {
 	// Get the current cart
-	cart, err := DBGetCart(userID)
+	cart, err := GetCart(userID)
 	if err != nil {
 		return err
 	}
@@ -238,7 +238,7 @@ func DBUpdateCartRemove(userID string, requestID guuid.UUID) error {
 	return nil
 }
 
-func DBUpdateCartEdit(userID string, request model.Request) error {
+func UpdateCartEdit(userID string, request model.Request) error {
 	collection := Client.Database(Config.Mongo.Database).Collection("carts")
 	opts := options.Update().SetUpsert(true)
 	filter := bson.D{primitive.E{Key: "user_id", Value: userID}, primitive.E{Key: "requests.id", Value: request.ID}}
@@ -262,7 +262,7 @@ func DBUpdateCartEdit(userID string, request model.Request) error {
 }
 
 // Create a new request
-func DBCreateRequest(userID string, request model.Request) error {
+func CreateRequest(userID string, request model.Request) error {
 	collection := Client.Database(Config.Mongo.Database).Collection("requests")
 	// Add meta data
 	request.State = "pending"
@@ -280,25 +280,25 @@ func DBCreateRequest(userID string, request model.Request) error {
 	return nil
 }
 
-func DBCartToRequest(userID string) error {
+func CartToRequest(userID string) error {
 	// Get the current cart
-	cart, err := DBGetCart(userID)
+	cart, err := GetCart(userID)
 	if err != nil {
 		return err
 	}
 	for _, request := range cart.Requests {
-		err = DBCreateRequest(userID, request)
+		err = CreateRequest(userID, request)
 		if err != nil {
 			return err
 		}
 	}
 	// Delete the users cart
-	DBDeleteCart(userID)
+	DeleteCart(userID)
 	return nil
 }
 
 // Get requests
-func DBGetRequests(userID string) ([]model.Request, error) {
+func GetRequests(userID string) ([]model.Request, error) {
 	log.Info("Getting user requests")
 	var results []model.Request
 	// Switch collection
@@ -326,7 +326,7 @@ func DBGetRequests(userID string) ([]model.Request, error) {
 }
 
 // Get a request
-func DBGetRequest(userID string, requestID guuid.UUID) (model.Request, error) {
+func GetRequest(userID string, requestID guuid.UUID) (model.Request, error) {
 	log.Info("Getting user request")
 	var result model.Request
 	// Switch collection
@@ -345,7 +345,7 @@ func DBGetRequest(userID string, requestID guuid.UUID) (model.Request, error) {
 	return result, nil
 }
 
-func DBUpdateRequest(userID string, request model.Request) error {
+func UpdateRequest(userID string, request model.Request) error {
 	collection := Client.Database(Config.Mongo.Database).Collection("requests")
 	opts := options.Update().SetUpsert(false)
 	filter := bson.D{primitive.E{Key: "id", Value: request.ID}}

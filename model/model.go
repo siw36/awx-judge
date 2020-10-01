@@ -89,3 +89,14 @@ type Cart struct {
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
 }
+
+type SurveyVars struct {
+	ExtraVars map[string]interface{} `json:"extra_vars"`
+}
+
+type JobTemplateLaunchResponse struct {
+	IgnoredFields          SurveyVars        `json:"ignored_fields"`
+	VariablesNeededToStart map[string]string `json:"variables_needed_to_start"`
+	Detail                 string            `json:"detail"`
+	Job                    int               `json:"job"`
+}
