@@ -2,7 +2,7 @@ package main
 
 import (
 	awx "./awx"
-	helper "./helper"
+	internal "./internal"
 	model "./model"
 	db "./db"
 	oidcConnector "./oidcConnector"
@@ -18,8 +18,8 @@ func init() {
 	// Parse config
 	log.Info("Parsing configuration")
 	var Config model.Config
-	helper.ReadConfigFile(&Config)
-	helper.ReadConfigEnv(&Config)
+	internal.ReadConfigFile(&Config)
+	internal.ReadConfigEnv(&Config)
 
 	// Inject in other packages
 	awx.Config = Config
