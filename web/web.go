@@ -18,9 +18,9 @@ import (
 	"github.com/gorilla/securecookie"
 
 	awx "../awx"
+	db "../db"
 	internal "../internal"
 	model "../model"
-	db "../db"
 )
 
 var Config model.Config
@@ -865,7 +865,7 @@ func requestsApprove(w http.ResponseWriter, r *http.Request) {
 	request.JudgeID = userID
 
 	// Write the updated request to DB
-	err = db.UpdateRequest(userID, request)
+	err = db.UpdateRequest(request)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -899,7 +899,7 @@ func requestsDeny(w http.ResponseWriter, r *http.Request) {
 	request.JudgeID = userID
 
 	// create db function for that
-	err = db.UpdateRequest(userID, request)
+	err = db.UpdateRequest(request)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)

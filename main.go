@@ -2,9 +2,10 @@ package main
 
 import (
 	awx "./awx"
+	bg "./bg"
+	db "./db"
 	internal "./internal"
 	model "./model"
-	db "./db"
 	oidcConnector "./oidcConnector"
 	web "./web"
 	log "github.com/Sirupsen/logrus"
@@ -36,7 +37,6 @@ func init() {
 func main() {
 	// // testing
 	// request, _ := db.GetRequest("admin", guuid.MustParse("0997457f-59da-4faa-a1b0-7cf4aae38ad4"))
-	// awx.LaunchJob(request)
-
+	go bg.JobLaunch()
 	web.Serve()
 }
