@@ -18,7 +18,7 @@ function loadTable() {
       }
     })
   ).then(function() {
-    // Handler for no items in cart
+    // Handler for no items
     if (templatesAvialable == undefined) {
       console.log("No templates found");
       // Display error
