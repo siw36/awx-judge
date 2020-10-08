@@ -325,6 +325,39 @@ func GetRequests(userID string) ([]model.Request, error) {
 	return results, nil
 }
 
+// Get requests by state
+func GetRequestsByState(state string) ([]model.Request, error) {
+	log.Info("Getting requests with state ", state)
+	// Switch collection
+	collection := Client.Database(Config.Mongo.Database).Collection("requests")
+	filter := bson.D{primitive.E{Key: "state", Value: state}}
+	documentCount, err := collection.CountDocuments(context.TODO(), filter)
+	if documentCount != 0 {
+		var results []model.Request
+		opts := options.Find().SetSort(bson.D{{Key: "updated_at", Value: 1}})
+		cursor, err := collection.Find(context.TODO(), filter, opts)
+		if cursor == nil {
+			log.Error("Query did not return a cursor: ", err)
+			cursor.Close(context.TODO())
+			return nil, err
+		}
+		if err != nil {
+			log.Info("Something went wrong: ", err)
+			cursor.Close(context.TODO())
+			return nil, err
+		}
+		if err = cursor.All(context.TODO(), &results); err != nil {
+			log.Error(err)
+			cursor.Close(context.TODO())
+			return nil, err
+		}
+		cursor.Close(context.TODO())
+		return results, nil
+	}
+	err = errors.New("No requests found")
+	return nil, err
+}
+
 // Get a request
 func GetRequest(userID string, requestID guuid.UUID) (model.Request, error) {
 	log.Info("Getting user request")
@@ -345,7 +378,7 @@ func GetRequest(userID string, requestID guuid.UUID) (model.Request, error) {
 	return result, nil
 }
 
-func UpdateRequest(userID string, request model.Request) error {
+func UpdateRequest(request model.Request) error {
 	collection := Client.Database(Config.Mongo.Database).Collection("requests")
 	opts := options.Update().SetUpsert(false)
 	filter := bson.D{primitive.E{Key: "id", Value: request.ID}}
@@ -360,11 +393,7 @@ func UpdateRequest(userID string, request model.Request) error {
 	}
 
 	if result.MatchedCount != 0 {
-		log.Info("Updated request for user ", userID)
-		return nil
-	}
-	if result.UpsertedCount != 0 {
-		log.Info("Added request to cart for user ", userID)
+		log.Info("Updated request ", request.ID)
 		return nil
 	}
 	return nil

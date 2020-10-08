@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	model "../model"
 	log "github.com/Sirupsen/logrus"
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 )
 
 var (
@@ -68,23 +70,27 @@ func GetSurvey(ID int) ([]model.Survey, error) {
 }
 
 func JobTemplateLaunch(id int, extraVars []byte) (jobID int, err error) {
-	log.Info("Launching job template  " + strconv.Itoa(id))
+	log.Info("Launching job template " + strconv.Itoa(id))
 	var response model.JobTemplateLaunchResponse
-	client := &http.Client{}
+	// Using http client with retries
+	retryClient := retryablehttp.NewClient()
+	retryClient.RetryMax = 3
+	retryClient.RetryWaitMin = 10 * time.Second
+	client := retryClient.StandardClient()
 	request, err := http.NewRequest("POST", Config.AWX.Host+"/api/v2/job_templates/"+strconv.Itoa(id)+"/launch/", nil)
-	request.SetBasicAuth(Config.AWX.User, Config.AWX.Password)
 	if err != nil {
 		log.Error("Failed to construct request for launch job template with error: ", err)
 		return 0, err
 	}
+	request.SetBasicAuth(Config.AWX.User, Config.AWX.Password)
 	responseRaw, err := client.Do(request)
 	if err != nil {
-		log.Error("Failed to launch job template with error: ", err)
+		log.Error(err)
 		return 0, err
 	}
 	if responseRaw.StatusCode == 201 {
 		json.NewDecoder(responseRaw.Body).Decode(&response)
-		log.Info("Successfully launched job template  " + strconv.Itoa(id))
+		log.Info("Successfully launched job template " + strconv.Itoa(id))
 		defer responseRaw.Body.Close()
 		return response.Job, err
 	} else {
@@ -93,6 +99,33 @@ func JobTemplateLaunch(id int, extraVars []byte) (jobID int, err error) {
 	}
 }
 
-// func JobGet(request model.Request) error {
-//
-// }
+func JobGet(id int) (job model.Job, err error) {
+	log.Info("Get status of job ", id)
+	var response model.Job
+	// Using http client with retries
+	retryClient := retryablehttp.NewClient()
+	retryClient.RetryMax = 3
+	retryClient.RetryWaitMin = 10 * time.Second
+	client := retryClient.StandardClient()
+	request, err := http.NewRequest("GET", Config.AWX.Host+"/api/v2/jobs/"+strconv.Itoa(id), nil)
+	if err != nil {
+		log.Error("Failed to construct request for get job status with error: ", err)
+		return response, err
+	}
+	request.SetBasicAuth(Config.AWX.User, Config.AWX.Password)
+	responseRaw, err := client.Do(request)
+	if err != nil {
+		log.Error(err)
+		return job, err
+	}
+
+	if responseRaw.StatusCode == 200 {
+		json.NewDecoder(responseRaw.Body).Decode(&response)
+		log.Info("Successfully got job status for " + strconv.Itoa(id))
+		defer responseRaw.Body.Close()
+		return response, nil
+	} else {
+		log.Error("Failed to get job status with error: ", responseRaw.Body)
+		return response, err
+	}
+}

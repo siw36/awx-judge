@@ -50,8 +50,16 @@ function loadSurvey() {
       // Display error message
       return;
     }
-    if (surveyAvailable.variable == "") {
-      console.log("Failed to get template survey from AWX")
+    if (surveyAvailable == null) {
+      console.log("Failed to get template survey from AWX or template has no survey variables")
+      $('#template_import_form_id').val(template_id);
+      $('#template_name').val(templateAvialable.name);
+      $('#template_description').val(templateAvialable.description);
+      // Enabling inputs after data is filled
+      $("#template_name").prop("readonly", false);
+      $("#template_description").prop("readonly", false);
+      $("#template_icon_link").prop("readonly", false);
+      $('#survey').hide();
     } else {
       if ('content' in document.createElement('template')) {
         $.each(surveyAvailable, function(i, available) {

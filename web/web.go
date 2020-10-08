@@ -18,9 +18,9 @@ import (
 	"github.com/gorilla/securecookie"
 
 	awx "../awx"
-	helper "../helper"
-	model "../model"
 	db "../db"
+	internal "../internal"
+	model "../model"
 )
 
 var Config model.Config
@@ -188,7 +188,7 @@ func templateImportList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	helper.JsonResponse(w, templates)
+	internal.JsonResponse(w, templates)
 }
 
 func templateImportGet(w http.ResponseWriter, r *http.Request) {
@@ -210,7 +210,7 @@ func templateImportGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	helper.JsonResponse(w, template)
+	internal.JsonResponse(w, template)
 }
 
 func templateImportSurveyGet(w http.ResponseWriter, r *http.Request) {
@@ -232,7 +232,7 @@ func templateImportSurveyGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	helper.JsonResponse(w, survey)
+	internal.JsonResponse(w, survey)
 }
 
 func templateImportAdd(w http.ResponseWriter, r *http.Request) {
@@ -278,9 +278,9 @@ func templateImportAdd(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// Download icon
-	if helper.ValidUrl(template.IconLink) {
+	if internal.ValidUrl(template.IconLink) {
 		log.Info("Downloading icon")
-		err, template.Icon = helper.DownloadIcon(template.ID, template.IconLink)
+		err, template.Icon = internal.DownloadIcon(template.ID, template.IconLink)
 		if err != nil {
 			log.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -317,7 +317,7 @@ func templateList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	helper.JsonResponse(w, templates)
+	internal.JsonResponse(w, templates)
 }
 
 func templateRemove(w http.ResponseWriter, r *http.Request) {
@@ -364,10 +364,10 @@ func templateGet(w http.ResponseWriter, r *http.Request) {
 	template, err := db.GetTemplate(templateQuery.ID)
 	if err != nil {
 		log.Error(err)
-		helper.JsonResponse(w, template)
+		internal.JsonResponse(w, template)
 		return
 	}
-	helper.JsonResponse(w, template)
+	internal.JsonResponse(w, template)
 	return
 }
 
@@ -464,7 +464,7 @@ func requestSpec(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 		return
 	}
-	helper.JsonResponse(w, template)
+	internal.JsonResponse(w, template)
 }
 
 func requestTemplateFormEdit(w http.ResponseWriter, r *http.Request) {
@@ -551,7 +551,7 @@ func cartList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	helper.JsonResponse(w, cart)
+	internal.JsonResponse(w, cart)
 }
 
 func cartAdd(w http.ResponseWriter, r *http.Request) {
@@ -810,7 +810,7 @@ func requestsList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	helper.JsonResponse(w, requests)
+	internal.JsonResponse(w, requests)
 }
 
 func requestsGet(w http.ResponseWriter, r *http.Request) {
@@ -827,7 +827,7 @@ func requestsGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	helper.JsonResponse(w, requests)
+	internal.JsonResponse(w, requests)
 }
 
 func requestsApprove(w http.ResponseWriter, r *http.Request) {
@@ -865,7 +865,7 @@ func requestsApprove(w http.ResponseWriter, r *http.Request) {
 	request.JudgeID = userID
 
 	// Write the updated request to DB
-	err = db.UpdateRequest(userID, request)
+	err = db.UpdateRequest(request)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -899,7 +899,7 @@ func requestsDeny(w http.ResponseWriter, r *http.Request) {
 	request.JudgeID = userID
 
 	// create db function for that
-	err = db.UpdateRequest(userID, request)
+	err = db.UpdateRequest(request)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
