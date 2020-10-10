@@ -111,7 +111,6 @@ func JsonResponse(w http.ResponseWriter, data interface{}) {
 
 // ValidUrl tests a string to determine if it is a well-structured url or not.
 func ValidUrl(toTest string) bool {
-	log.Info(toTest)
 	_, err := url.ParseRequestURI(toTest)
 	if err != nil {
 		return false
@@ -134,4 +133,12 @@ func ExtraVars(request model.Request) ([]byte, error) {
 		return jsonString, err
 	}
 	return jsonString, err
+}
+
+func FileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
