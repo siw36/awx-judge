@@ -10,6 +10,44 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
+func DownloadAllIcons() {
+	log.Info("Starting to download all missing icons")
+	// Get all imported templates
+	var templates []model.Template
+	var err error
+	templates, err = db.GetTemplateAll()
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	for _, template := range templates {
+		// Check if a icon is set
+		if template.IconLink == "" {
+			log.Info("Skipping icon download because none is set for template ", template.ID)
+			continue
+		}
+		// Check if the icon is already present
+		if internal.FileExists("www/" + template.Icon) {
+			log.Info("Skipping icon download because the file is already present")
+			continue
+		}
+		// Download icon
+		if internal.ValidUrl(template.IconLink) {
+			log.Info("Downloading icon")
+			err, template.Icon = internal.DownloadIcon(template.ID, template.IconLink)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+		} else {
+			log.Info("Skipping icon download due to malformed URL")
+			continue
+		}
+	}
+	log.Info("Finished downloading all missing icons")
+	return
+}
+
 func JobLaunch() {
 	log.Info("Starting background job launcher")
 	// Get all approved requests

@@ -32,6 +32,9 @@ func init() {
 	var Client *mongo.Client
 	Client = db.Connect(Config.Mongo.ConnectionString, Config.Mongo.Database)
 	db.Client = Client
+
+	// Download all icons
+	go bg.DownloadAllIcons()
 }
 
 func main() {
