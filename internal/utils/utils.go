@@ -1,4 +1,4 @@
-package internal
+package utils
 
 import (
 	"encoding/json"
@@ -7,18 +7,23 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
-	model "../model"
+	"github.com/siw36/awx-judge/internal/model"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	envconfig "github.com/kelseyhightower/envconfig"
 	yaml "gopkg.in/yaml.v2"
 )
 
+var Root string = RootDir()
+
 func ReadConfigFile(cfg *model.Config) {
-	f, err := os.Open("config.yaml")
+	f, err := os.Open("../../configs/config.yaml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -52,7 +57,7 @@ func HttpClient() *http.Client {
 }
 
 func DownloadIcon(id int, link string) (err error, icon string) {
-	var pv string = "www/static/icons"
+	var pv string = "web/static/icons"
 	if _, err := os.Stat(pv); os.IsNotExist(err) {
 		return err, ""
 	}
@@ -141,4 +146,10 @@ func FileExists(filename string) bool {
 		return false
 	}
 	return !info.IsDir()
+}
+
+func RootDir() string {
+	_, b, _, _ := runtime.Caller(0)
+	d := path.Join(path.Dir(b))
+	return filepath.Dir(d)
 }

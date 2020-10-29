@@ -12,18 +12,19 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	guuid "github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 
-	awx "../awx"
-	db "../db"
-	internal "../internal"
-	model "../model"
+	"github.com/siw36/awx-judge/internal/awx"
+	"github.com/siw36/awx-judge/internal/db"
+	"github.com/siw36/awx-judge/internal/model"
+	"github.com/siw36/awx-judge/internal/utils"
 )
 
 var Config model.Config
+var Root string = utils.RootDir()
 
 var cookieHandler = securecookie.New(
 	securecookie.GenerateRandomKey(64),
@@ -188,7 +189,7 @@ func templateImportList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	internal.JsonResponse(w, templates)
+	utils.JsonResponse(w, templates)
 }
 
 func templateImportGet(w http.ResponseWriter, r *http.Request) {
@@ -210,7 +211,7 @@ func templateImportGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	internal.JsonResponse(w, template)
+	utils.JsonResponse(w, template)
 }
 
 func templateImportSurveyGet(w http.ResponseWriter, r *http.Request) {
@@ -232,7 +233,7 @@ func templateImportSurveyGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	internal.JsonResponse(w, survey)
+	utils.JsonResponse(w, survey)
 }
 
 func templateImportAdd(w http.ResponseWriter, r *http.Request) {
@@ -278,9 +279,9 @@ func templateImportAdd(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// Download icon
-	if internal.ValidUrl(template.IconLink) {
+	if utils.ValidUrl(template.IconLink) {
 		log.Info("Downloading icon")
-		err, template.Icon = internal.DownloadIcon(template.ID, template.IconLink)
+		err, template.Icon = utils.DownloadIcon(template.ID, template.IconLink)
 		if err != nil {
 			log.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -317,7 +318,7 @@ func templateList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	internal.JsonResponse(w, templates)
+	utils.JsonResponse(w, templates)
 }
 
 func templateRemove(w http.ResponseWriter, r *http.Request) {
@@ -364,10 +365,10 @@ func templateGet(w http.ResponseWriter, r *http.Request) {
 	template, err := db.GetTemplate(templateQuery.ID)
 	if err != nil {
 		log.Error(err)
-		internal.JsonResponse(w, template)
+		utils.JsonResponse(w, template)
 		return
 	}
-	internal.JsonResponse(w, template)
+	utils.JsonResponse(w, template)
 	return
 }
 
@@ -464,7 +465,7 @@ func requestSpec(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 		return
 	}
-	internal.JsonResponse(w, template)
+	utils.JsonResponse(w, template)
 }
 
 func requestTemplateFormEdit(w http.ResponseWriter, r *http.Request) {
@@ -551,7 +552,7 @@ func cartList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	internal.JsonResponse(w, cart)
+	utils.JsonResponse(w, cart)
 }
 
 func cartAdd(w http.ResponseWriter, r *http.Request) {
@@ -810,7 +811,7 @@ func requestsList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	internal.JsonResponse(w, requests)
+	utils.JsonResponse(w, requests)
 }
 
 func requestsGet(w http.ResponseWriter, r *http.Request) {
@@ -827,7 +828,7 @@ func requestsGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	internal.JsonResponse(w, requests)
+	utils.JsonResponse(w, requests)
 }
 
 func requestsApprove(w http.ResponseWriter, r *http.Request) {

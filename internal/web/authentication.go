@@ -3,9 +3,9 @@ package web
 import (
 	"net/http"
 
-	db "../db"
+	"github.com/siw36/awx-judge/internal/db"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // https://gist.github.com/mschoebel/9398202

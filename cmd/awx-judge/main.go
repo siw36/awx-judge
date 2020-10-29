@@ -1,14 +1,13 @@
 package main
 
 import (
-	awx "./awx"
-	bg "./bg"
-	db "./db"
-	internal "./internal"
-	model "./model"
-	oidcConnector "./oidcConnector"
-	web "./web"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+	"github.com/siw36/awx-judge/internal/awx"
+	"github.com/siw36/awx-judge/internal/bg"
+	"github.com/siw36/awx-judge/internal/db"
+	"github.com/siw36/awx-judge/internal/model"
+	"github.com/siw36/awx-judge/internal/utils"
+	"github.com/siw36/awx-judge/internal/web"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -19,14 +18,14 @@ func init() {
 	// Parse config
 	log.Info("Parsing configuration")
 	var Config model.Config
-	internal.ReadConfigFile(&Config)
-	internal.ReadConfigEnv(&Config)
+	utils.ReadConfigFile(&Config)
+	utils.ReadConfigEnv(&Config)
 
 	// Inject in other packages
 	awx.Config = Config
 	db.Config = Config
 	web.Config = Config
-	oidcConnector.OIDConnection = Config.OIDC
+	//oidcConnector.OIDConnection = Config.OIDC
 
 	// Establish MongoDB connection
 	var Client *mongo.Client

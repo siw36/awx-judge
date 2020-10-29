@@ -3,11 +3,11 @@ package bg
 import (
 	"time"
 
-	awx "../awx"
-	db "../db"
-	internal "../internal"
-	model "../model"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+	"github.com/siw36/awx-judge/internal/awx"
+	"github.com/siw36/awx-judge/internal/db"
+	"github.com/siw36/awx-judge/internal/model"
+	"github.com/siw36/awx-judge/internal/utils"
 )
 
 func DownloadAllIcons() {
@@ -27,14 +27,14 @@ func DownloadAllIcons() {
 			continue
 		}
 		// Check if the icon is already present
-		if internal.FileExists("www/" + template.Icon) {
+		if utils.FileExists("www/" + template.Icon) {
 			log.Info("Skipping icon download because the file is already present")
 			continue
 		}
 		// Download icon
-		if internal.ValidUrl(template.IconLink) {
+		if utils.ValidUrl(template.IconLink) {
 			log.Info("Downloading icon")
-			err, template.Icon = internal.DownloadIcon(template.ID, template.IconLink)
+			err, template.Icon = utils.DownloadIcon(template.ID, template.IconLink)
 			if err != nil {
 				log.Error(err)
 				continue
@@ -68,7 +68,7 @@ func JobLaunch() {
 		}
 		// Construct extra vars
 		log.Info("Launching request ", request.ID)
-		extraVars, err := internal.ExtraVars(request)
+		extraVars, err := utils.ExtraVars(request)
 		if err != nil {
 			request.State = "Error"
 			request.LastMessage = "Failed to construct extra vars"
