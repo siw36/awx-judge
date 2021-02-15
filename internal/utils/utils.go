@@ -15,15 +15,15 @@ import (
 
 	"github.com/siw36/awx-judge/internal/model"
 
-	log "github.com/sirupsen/logrus"
 	envconfig "github.com/kelseyhightower/envconfig"
+	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )
 
 var Root string = RootDir()
 
-func ReadConfigFile(cfg *model.Config) {
-	f, err := os.Open("../../configs/config.yaml")
+func ReadConfigFile(path string, cfg *model.Config) {
+	f, err := os.Open(path)
 	if err != nil {
 		log.Error(err)
 		return
@@ -57,7 +57,7 @@ func HttpClient() *http.Client {
 }
 
 func DownloadIcon(id int, link string) (err error, icon string) {
-	var pv string = "web/static/icons"
+	var pv string = "/var/web/static/icons"
 	if _, err := os.Stat(pv); os.IsNotExist(err) {
 		return err, ""
 	}
@@ -91,7 +91,7 @@ func DownloadIcon(id int, link string) (err error, icon string) {
 
 	log.Infof("Downloaded icon %s with size %s", fileName, strconv.FormatInt(int64(size), 10))
 
-	return err, strings.Replace(fileName, "www/", "", -1)
+	return err, strings.Replace(fileName, "/var/web/", "", -1)
 }
 
 func JsonResponse(w http.ResponseWriter, data interface{}) {

@@ -26,6 +26,7 @@ type OIDConnection struct {
 }
 
 type Config struct {
+	Path          string          `envconfig:"AWX_JUDGE_CONFIG_PATH"`
 	Mongo         MongoConnection `yaml:"mongoConnection"`
 	AWX           AWXConnection   `yaml:"awxConnection"`
 	OIDC          OIDConnection   `yaml:"oidConnection"`

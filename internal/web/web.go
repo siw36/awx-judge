@@ -33,7 +33,7 @@ var cookieHandler = securecookie.New(
 func Serve() {
 	r := mux.NewRouter()
 	// Staic
-	fsStatic := http.FileServer(http.Dir("../../web/static"))
+	fsStatic := http.FileServer(http.Dir("/var/web/static"))
 	fsLogos := http.FileServer(http.Dir("/tmp"))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fsStatic))
 	r.PathPrefix("/icons/").Handler(http.StripPrefix("/tmp/icons/", fsLogos))
@@ -123,7 +123,7 @@ func goTemplateLayout(templateFile string) (*template.Template, error) {
 	// New template with attached functions
 	name := path.Base(templateFile)
 	t := template.New(name).Funcs(tFuncs)
-	t, err := t.ParseFiles(templateFile, "../../web/sources.gohtml", "../../web/header.gohtml", "../../web/footer.gohtml")
+	t, err := t.ParseFiles(templateFile, "/var/web/sources.gohtml", "/var/web/header.gohtml", "/var/web/footer.gohtml")
 	return t, err
 }
 
@@ -137,7 +137,7 @@ func templateImport(w http.ResponseWriter, r *http.Request) {
 	if !activeSession {
 		return
 	}
-	t, err := goTemplateLayout("../../web/template-import.gohtml")
+	t, err := goTemplateLayout("/var/web/template-import.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -159,7 +159,7 @@ func templateImportForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render template
-	t, err := goTemplateLayout("../../web/template-import-form.gohtml")
+	t, err := goTemplateLayout("/var/web/template-import-form.gohtml")
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -173,7 +173,7 @@ func templateImportForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else {
-		log.Info("Parsed ../../web/template-import-form.gohtml")
+		log.Info("Parsed /var/web/template-import-form.gohtml")
 	}
 }
 
@@ -375,7 +375,7 @@ func templateGet(w http.ResponseWriter, r *http.Request) {
 // // Get all inputs
 // func request(w http.ResponseWriter, r *http.Request) {
 // 	// Show spinner and build the real website asynchonous
-// 	t := template.Must(template.New("request.gohtml").ParseFiles("../../web/request.gohtml"))
+// 	t := template.Must(template.New("request.gohtml").ParseFiles("/var/web/request.gohtml"))
 // 	if r.Method != http.MethodPost {
 // 		t.Execute(w, nil)
 // 		return
@@ -412,7 +412,7 @@ func shop(w http.ResponseWriter, r *http.Request) {
 
 	// Render template
 	//t := template.New("shop")
-	t, err := goTemplateLayout("../../web/shop.gohtml")
+	t, err := goTemplateLayout("/var/web/shop.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -423,7 +423,7 @@ func shop(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed ../../web/shop.gohtml")
+		log.Info("Parsed /var/web/shop.gohtml")
 	}
 }
 
@@ -433,7 +433,7 @@ func request(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t, err := goTemplateLayout("../../web/request.gohtml")
+	t, err := goTemplateLayout("/var/web/request.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -444,7 +444,7 @@ func request(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed ../../web/request.gohtml")
+		log.Info("Parsed /var/web/request.gohtml")
 	}
 }
 
@@ -504,7 +504,7 @@ func requestTemplateFormEdit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render template
-	t, err := goTemplateLayout("../../web/request-template-form-edit.gohtml")
+	t, err := goTemplateLayout("/var/web/request-template-form-edit.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -515,7 +515,7 @@ func requestTemplateFormEdit(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed ../../web/request-template-form-edit.gohtml")
+		log.Info("Parsed /var/web/request-template-form-edit.gohtml")
 	}
 }
 
@@ -525,7 +525,7 @@ func cart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Render template
-	t, err := goTemplateLayout("../../web/cart.gohtml")
+	t, err := goTemplateLayout("/var/web/cart.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -535,7 +535,7 @@ func cart(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed ../../web/cart.gohtml")
+		log.Info("Parsed /var/web/cart.gohtml")
 	}
 }
 
@@ -740,7 +740,7 @@ func requests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Render template
-	t, err := goTemplateLayout("../../web/requests.gohtml")
+	t, err := goTemplateLayout("/var/web/requests.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -751,7 +751,7 @@ func requests(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed ../../web/requests.gohtml")
+		log.Info("Parsed /var/web/requests.gohtml")
 	}
 }
 
@@ -944,7 +944,7 @@ func loginForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render template
-	t, err := goTemplateLayout("../../web/login.gohtml")
+	t, err := goTemplateLayout("/var/web/login.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -957,6 +957,6 @@ func loginForm(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed ../../web/login.gohtml")
+		log.Info("Parsed /var/web/login.gohtml")
 	}
 }

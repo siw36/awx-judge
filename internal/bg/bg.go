@@ -27,7 +27,7 @@ func DownloadAllIcons() {
 			continue
 		}
 		// Check if the icon is already present
-		if utils.FileExists("www/" + template.Icon) {
+		if utils.FileExists("/var/web/static/icons/" + template.Icon) {
 			log.Info("Skipping icon download because the file is already present")
 			continue
 		}

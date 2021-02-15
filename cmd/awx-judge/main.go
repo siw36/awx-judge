@@ -18,8 +18,8 @@ func init() {
 	// Parse config
 	log.Info("Parsing configuration")
 	var Config model.Config
-	utils.ReadConfigFile(&Config)
 	utils.ReadConfigEnv(&Config)
+	utils.ReadConfigFile(Config.Path, &Config)
 
 	// Inject in other packages
 	awx.Config = Config
