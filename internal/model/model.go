@@ -26,6 +26,7 @@ type OIDConnection struct {
 }
 
 type Config struct {
+	Path          string          `envconfig:"AWX_JUDGE_CONFIG_PATH"`
 	Mongo         MongoConnection `yaml:"mongoConnection"`
 	AWX           AWXConnection   `yaml:"awxConnection"`
 	OIDC          OIDConnection   `yaml:"oidConnection"`
@@ -88,4 +89,15 @@ type Cart struct {
 	Requests  []Request `json:"requests" bson:"requests"`
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
+}
+
+type SurveyVars struct {
+	ExtraVars map[string]interface{} `json:"extra_vars"`
+}
+
+type JobTemplateLaunchResponse struct {
+	IgnoredFields          SurveyVars        `json:"ignored_fields"`
+	VariablesNeededToStart map[string]string `json:"variables_needed_to_start"`
+	Detail                 string            `json:"detail"`
+	Job                    int               `json:"job"`
 }

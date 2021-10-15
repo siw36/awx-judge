@@ -1,4 +1,4 @@
-package webServer
+package web
 
 import (
 	"context"
@@ -12,18 +12,19 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	guuid "github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
+	log "github.com/sirupsen/logrus"
 
-	awxConnector "../awxConnector"
-	helper "../helper"
-	model "../model"
-	mongoConnector "../mongoConnector"
+	"github.com/siw36/awx-judge/internal/awx"
+	"github.com/siw36/awx-judge/internal/db"
+	"github.com/siw36/awx-judge/internal/model"
+	"github.com/siw36/awx-judge/internal/utils"
 )
 
 var Config model.Config
+var Root string = utils.RootDir()
 
 var cookieHandler = securecookie.New(
 	securecookie.GenerateRandomKey(64),
@@ -32,7 +33,7 @@ var cookieHandler = securecookie.New(
 func Serve() {
 	r := mux.NewRouter()
 	// Staic
-	fsStatic := http.FileServer(http.Dir("www/static"))
+	fsStatic := http.FileServer(http.Dir("/var/web/static"))
 	fsLogos := http.FileServer(http.Dir("/tmp"))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fsStatic))
 	r.PathPrefix("/icons/").Handler(http.StripPrefix("/tmp/icons/", fsLogos))
@@ -110,7 +111,7 @@ func Serve() {
 	// to finalize based on context cancellation.
 	log.Info("Shutting down server gracefully")
 	// Disconnect from DB
-	mongoConnector.DBDisconnect(mongoConnector.Client)
+	db.Disonnect(db.Client)
 	os.Exit(0)
 
 }
@@ -122,7 +123,7 @@ func goTemplateLayout(templateFile string) (*template.Template, error) {
 	// New template with attached functions
 	name := path.Base(templateFile)
 	t := template.New(name).Funcs(tFuncs)
-	t, err := t.ParseFiles(templateFile, "www/sources.gohtml", "www/header.gohtml", "www/footer.gohtml")
+	t, err := t.ParseFiles(templateFile, "/var/web/sources.gohtml", "/var/web/header.gohtml", "/var/web/footer.gohtml")
 	return t, err
 }
 
@@ -136,7 +137,7 @@ func templateImport(w http.ResponseWriter, r *http.Request) {
 	if !activeSession {
 		return
 	}
-	t, err := goTemplateLayout("www/template-import.gohtml")
+	t, err := goTemplateLayout("/var/web/template-import.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -158,7 +159,7 @@ func templateImportForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render template
-	t, err := goTemplateLayout("www/template-import-form.gohtml")
+	t, err := goTemplateLayout("/var/web/template-import-form.gohtml")
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -172,7 +173,7 @@ func templateImportForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else {
-		log.Info("Parsed www/template-import-form.gohtml")
+		log.Info("Parsed /var/web/template-import-form.gohtml")
 	}
 }
 
@@ -182,13 +183,13 @@ func templateImportList(w http.ResponseWriter, r *http.Request) {
 	if !activeSession {
 		return
 	}
-	templates, err := awxConnector.GetTemplates()
+	templates, err := awx.GetTemplates()
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	helper.JsonResponse(w, templates)
+	utils.JsonResponse(w, templates)
 }
 
 func templateImportGet(w http.ResponseWriter, r *http.Request) {
@@ -204,13 +205,13 @@ func templateImportGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	template, err := awxConnector.GetTemplate(templateQuery.ID)
+	template, err := awx.GetTemplate(templateQuery.ID)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	helper.JsonResponse(w, template)
+	utils.JsonResponse(w, template)
 }
 
 func templateImportSurveyGet(w http.ResponseWriter, r *http.Request) {
@@ -226,13 +227,13 @@ func templateImportSurveyGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	survey, err := awxConnector.GetSurvey(templateQuery.ID)
+	survey, err := awx.GetSurvey(templateQuery.ID)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	helper.JsonResponse(w, survey)
+	utils.JsonResponse(w, survey)
 }
 
 func templateImportAdd(w http.ResponseWriter, r *http.Request) {
@@ -248,13 +249,13 @@ func templateImportAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	templateID, _ := strconv.Atoi(r.PostFormValue("template_import_form_id"))
-	template, err := awxConnector.GetTemplate(templateID)
+	template, err := awx.GetTemplate(templateID)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	template.Survey, err = awxConnector.GetSurvey(templateID)
+	template.Survey, err = awx.GetSurvey(templateID)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -278,9 +279,9 @@ func templateImportAdd(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// Download icon
-	if helper.ValidUrl(template.IconLink) {
+	if utils.ValidUrl(template.IconLink) {
 		log.Info("Downloading icon")
-		err, template.Icon = helper.DownloadIcon(template.ID, template.IconLink)
+		err, template.Icon = utils.DownloadIcon(template.ID, template.IconLink)
 		if err != nil {
 			log.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -290,7 +291,7 @@ func templateImportAdd(w http.ResponseWriter, r *http.Request) {
 		log.Info("Skipping icon download due to malformed URL")
 	}
 	// Write the object to DB
-	err = mongoConnector.DBCreateTemplate(template)
+	err = db.CreateTemplate(template)
 	if err != nil {
 		log.Error("Import failed")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -311,13 +312,13 @@ func templateList(w http.ResponseWriter, r *http.Request) {
 	}
 	var templates []model.Template
 	var err error
-	templates, err = mongoConnector.DBGetTemplateAll()
+	templates, err = db.GetTemplateAll()
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	helper.JsonResponse(w, templates)
+	utils.JsonResponse(w, templates)
 }
 
 func templateRemove(w http.ResponseWriter, r *http.Request) {
@@ -335,7 +336,7 @@ func templateRemove(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = mongoConnector.DBRemoveTemplate(template.ID)
+	err = db.RemoveTemplate(template.ID)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -361,20 +362,20 @@ func templateGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	template, err := mongoConnector.DBGetTemplate(templateQuery.ID)
+	template, err := db.GetTemplate(templateQuery.ID)
 	if err != nil {
 		log.Error(err)
-		helper.JsonResponse(w, template)
+		utils.JsonResponse(w, template)
 		return
 	}
-	helper.JsonResponse(w, template)
+	utils.JsonResponse(w, template)
 	return
 }
 
 // // Get all inputs
 // func request(w http.ResponseWriter, r *http.Request) {
 // 	// Show spinner and build the real website asynchonous
-// 	t := template.Must(template.New("request.gohtml").ParseFiles("www/request.gohtml"))
+// 	t := template.Must(template.New("request.gohtml").ParseFiles("/var/web/request.gohtml"))
 // 	if r.Method != http.MethodPost {
 // 		t.Execute(w, nil)
 // 		return
@@ -411,7 +412,7 @@ func shop(w http.ResponseWriter, r *http.Request) {
 
 	// Render template
 	//t := template.New("shop")
-	t, err := goTemplateLayout("www/shop.gohtml")
+	t, err := goTemplateLayout("/var/web/shop.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -422,7 +423,7 @@ func shop(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed www/shop.gohtml")
+		log.Info("Parsed /var/web/shop.gohtml")
 	}
 }
 
@@ -432,7 +433,7 @@ func request(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t, err := goTemplateLayout("www/request.gohtml")
+	t, err := goTemplateLayout("/var/web/request.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -443,7 +444,7 @@ func request(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed www/request.gohtml")
+		log.Info("Parsed /var/web/request.gohtml")
 	}
 }
 
@@ -459,12 +460,12 @@ func requestSpec(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msg, 400)
 		return
 	}
-	template, err := mongoConnector.DBGetTemplate(id)
+	template, err := db.GetTemplate(id)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	helper.JsonResponse(w, template)
+	utils.JsonResponse(w, template)
 }
 
 func requestTemplateFormEdit(w http.ResponseWriter, r *http.Request) {
@@ -474,7 +475,7 @@ func requestTemplateFormEdit(w http.ResponseWriter, r *http.Request) {
 	}
 	// Get the user's cart
 	userID := getUserID(r)
-	cart, err := mongoConnector.DBGetCart(userID)
+	cart, err := db.GetCart(userID)
 	if err != nil {
 		log.Error(err)
 		return
@@ -503,7 +504,7 @@ func requestTemplateFormEdit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render template
-	t, err := goTemplateLayout("www/request-template-form-edit.gohtml")
+	t, err := goTemplateLayout("/var/web/request-template-form-edit.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -514,7 +515,7 @@ func requestTemplateFormEdit(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed www/request-template-form-edit.gohtml")
+		log.Info("Parsed /var/web/request-template-form-edit.gohtml")
 	}
 }
 
@@ -524,7 +525,7 @@ func cart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Render template
-	t, err := goTemplateLayout("www/cart.gohtml")
+	t, err := goTemplateLayout("/var/web/cart.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -534,7 +535,7 @@ func cart(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed www/cart.gohtml")
+		log.Info("Parsed /var/web/cart.gohtml")
 	}
 }
 
@@ -545,13 +546,13 @@ func cartList(w http.ResponseWriter, r *http.Request) {
 	}
 	// Get the user's cart
 	userID := getUserID(r)
-	cart, err := mongoConnector.DBGetCart(userID)
+	cart, err := db.GetCart(userID)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	helper.JsonResponse(w, cart)
+	utils.JsonResponse(w, cart)
 }
 
 func cartAdd(w http.ResponseWriter, r *http.Request) {
@@ -575,7 +576,7 @@ func cartAdd(w http.ResponseWriter, r *http.Request) {
 	request.RequestReason = r.PostFormValue("request_reason")
 	// Get the survey spec from imported template
 	// and set it for this request
-	request.Template, err = mongoConnector.DBGetTemplate(request.TemplateID)
+	request.Template, err = db.GetTemplate(request.TemplateID)
 	if err != nil {
 		log.Error(err)
 		return
@@ -595,14 +596,14 @@ func cartAdd(w http.ResponseWriter, r *http.Request) {
 	// Cache userID
 	userID := getUserID(r)
 	// Create a cart for the user
-	err = mongoConnector.DBCreateCart(userID)
+	err = db.CreateCart(userID)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	// Add the request object to the users cart
-	err = mongoConnector.DBUpdateCartAdd(userID, request)
+	err = db.UpdateCartAdd(userID, request)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -631,14 +632,14 @@ func cartRemove(w http.ResponseWriter, r *http.Request) {
 	// Cache userID
 	userID := getUserID(r)
 	// Create a cart for the user
-	err = mongoConnector.DBCreateCart(userID)
+	err = db.CreateCart(userID)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	// Remove the request object from the users cart
-	err = mongoConnector.DBUpdateCartRemove(userID, request.ID)
+	err = db.UpdateCartRemove(userID, request.ID)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -662,7 +663,7 @@ func cartEdit(w http.ResponseWriter, r *http.Request) {
 	// Cache userID
 	userID := getUserID(r)
 	// Create a cart for the user
-	err = mongoConnector.DBCreateCart(userID)
+	err = db.CreateCart(userID)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -680,7 +681,7 @@ func cartEdit(w http.ResponseWriter, r *http.Request) {
 	request.ID = guuid.MustParse(r.PostFormValue("request_id"))
 	// Get the survey spec from imported template
 	// and set it for this request
-	request.Template, err = mongoConnector.DBGetTemplate(request.TemplateID)
+	request.Template, err = db.GetTemplate(request.TemplateID)
 	if err != nil {
 		log.Error(err)
 		return
@@ -697,7 +698,7 @@ func cartEdit(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// Apply the changed request
-	err = mongoConnector.DBUpdateCartEdit(userID, request)
+	err = db.UpdateCartEdit(userID, request)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -716,7 +717,7 @@ func cartToRequest(w http.ResponseWriter, r *http.Request) {
 	// Cache userID
 	userID := getUserID(r)
 	// Create a request for each item in the users cart
-	err := mongoConnector.DBCartToRequest(userID)
+	err := db.CartToRequest(userID)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -733,13 +734,13 @@ func requests(w http.ResponseWriter, r *http.Request) {
 	}
 	// Get the requests
 	userID := getUserID(r)
-	requests, err := mongoConnector.DBGetRequests(userID)
+	requests, err := db.GetRequests(userID)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 	// Render template
-	t, err := goTemplateLayout("www/requests.gohtml")
+	t, err := goTemplateLayout("/var/web/requests.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -750,7 +751,7 @@ func requests(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed www/requests.gohtml")
+		log.Info("Parsed /var/web/requests.gohtml")
 	}
 }
 
@@ -773,7 +774,7 @@ func requestReorder(w http.ResponseWriter, r *http.Request) {
 	// Cache userID
 	userID := getUserID(r)
 	// Create a cart for the user
-	err = mongoConnector.DBCreateCart(userID)
+	err = db.CreateCart(userID)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -782,7 +783,7 @@ func requestReorder(w http.ResponseWriter, r *http.Request) {
 
 	// Get the request
 	var newRequest model.Request
-	newRequest, err = mongoConnector.DBGetRequest(userID, request.ID)
+	newRequest, err = db.GetRequest(userID, request.ID)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -790,7 +791,7 @@ func requestReorder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Add the new request to the users cart
-	err = mongoConnector.DBUpdateCartAdd(userID, newRequest)
+	err = db.UpdateCartAdd(userID, newRequest)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -804,13 +805,13 @@ func requestsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userID := getUserID(r)
-	requests, err := mongoConnector.DBGetRequests(userID)
+	requests, err := db.GetRequests(userID)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	helper.JsonResponse(w, requests)
+	utils.JsonResponse(w, requests)
 }
 
 func requestsGet(w http.ResponseWriter, r *http.Request) {
@@ -821,13 +822,13 @@ func requestsGet(w http.ResponseWriter, r *http.Request) {
 	userID := getUserID(r)
 	vars := mux.Vars(r)
 	requestID := guuid.MustParse(vars["requestID"])
-	requests, err := mongoConnector.DBGetRequest(userID, requestID)
+	requests, err := db.GetRequest(userID, requestID)
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	helper.JsonResponse(w, requests)
+	utils.JsonResponse(w, requests)
 }
 
 func requestsApprove(w http.ResponseWriter, r *http.Request) {
@@ -839,23 +840,33 @@ func requestsApprove(w http.ResponseWriter, r *http.Request) {
 
 	// Parse json
 	log.Info("Parsing json for requestsApprove request")
-	var request model.Request
-	err := json.NewDecoder(r.Body).Decode(&request)
+	var changes model.Request
+	err := json.NewDecoder(r.Body).Decode(&changes)
 	if err != nil {
 		log.Error("Parsing json for requestsApprove request failed with error: ", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// Get the user request
+	request, err := db.GetRequest(userID, changes.ID)
+
+	if request.State != "pending" {
+		log.Error("Request state is not pending. Approval canceled.")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	// Apply the changes to the request
+	request.Reason = changes.Reason
 	request.State = "approved"
 	message := "Approved by " + userID
 	request.LastMessage = message
 	request.Messages = append(request.Messages, message)
 	request.JudgeID = userID
 
-	// create db function for that
-	err = mongoConnector.DBUpdateRequest(userID, request)
+	// Write the updated request to DB
+	err = db.UpdateRequest(request)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -889,7 +900,7 @@ func requestsDeny(w http.ResponseWriter, r *http.Request) {
 	request.JudgeID = userID
 
 	// create db function for that
-	err = mongoConnector.DBUpdateRequest(userID, request)
+	err = db.UpdateRequest(request)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -908,14 +919,14 @@ func requestsDeny(w http.ResponseWriter, r *http.Request) {
 // 	requestID := guuid.MustParse(r.PostFormValue("request_id"))
 // 	userID := getUserID(r)
 // 	log.Info("Getting request ", requestID)
-// 	request, err := mongoConnector.DBGetRequest(userID, requestID)
+// 	request, err := db.GetRequest(userID, requestID)
 // 	if err != nil {
 // 		log.Error(err)
 // 		return
 // 	}
 // 	// Add the request to the users cart
 // 	log.Info("Saving a copy of request ", requestID)
-// 	err = mongoConnector.DBUpdateCartAdd(userID, request)
+// 	err = db.UpdateCartAdd(userID, request)
 // 	if err != nil {
 // 		log.Error(err)
 // 		w.WriteHeader(http.StatusInternalServerError)
@@ -933,7 +944,7 @@ func loginForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render template
-	t, err := goTemplateLayout("www/login.gohtml")
+	t, err := goTemplateLayout("/var/web/login.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -946,6 +957,6 @@ func loginForm(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed www/login.gohtml")
+		log.Info("Parsed /var/web/login.gohtml")
 	}
 }

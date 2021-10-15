@@ -1,4 +1,4 @@
-package helper
+package utils
 
 import (
 	"encoding/json"
@@ -7,18 +7,23 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
-	model "../model"
+	"github.com/siw36/awx-judge/internal/model"
 
-	log "github.com/Sirupsen/logrus"
 	envconfig "github.com/kelseyhightower/envconfig"
+	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )
 
-func ReadConfigFile(cfg *model.Config) {
-	f, err := os.Open("config.yaml")
+var Root string = RootDir()
+
+func ReadConfigFile(path string, cfg *model.Config) {
+	f, err := os.Open(path)
 	if err != nil {
 		log.Error(err)
 		return
@@ -52,7 +57,7 @@ func HttpClient() *http.Client {
 }
 
 func DownloadIcon(id int, link string) (err error, icon string) {
-	var pv string = "www/static/icons"
+	var pv string = "/var/web/static/icons"
 	if _, err := os.Stat(pv); os.IsNotExist(err) {
 		return err, ""
 	}
@@ -86,7 +91,7 @@ func DownloadIcon(id int, link string) (err error, icon string) {
 
 	log.Infof("Downloaded icon %s with size %s", fileName, strconv.FormatInt(int64(size), 10))
 
-	return err, strings.Replace(fileName, "www/", "", -1)
+	return err, strings.Replace(fileName, "/var/web/", "", -1)
 }
 
 func JsonResponse(w http.ResponseWriter, data interface{}) {
@@ -111,11 +116,40 @@ func JsonResponse(w http.ResponseWriter, data interface{}) {
 
 // ValidUrl tests a string to determine if it is a well-structured url or not.
 func ValidUrl(toTest string) bool {
-	log.Info(toTest)
 	_, err := url.ParseRequestURI(toTest)
 	if err != nil {
 		return false
 	}
-
 	return true
+}
+
+func ExtraVars(request model.Request) ([]byte, error) {
+	// Format survey variables
+	log.Info("Building extra_vars json from request")
+	var surveyVars model.SurveyVars
+	m := make(map[string]interface{})
+	for _, item := range request.Template.Survey {
+		m[item.Variable] = item.Value
+	}
+	surveyVars.ExtraVars = m
+	jsonString, err := json.Marshal(surveyVars)
+	if err != nil {
+		log.Error(err)
+		return jsonString, err
+	}
+	return jsonString, err
+}
+
+func FileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}
+
+func RootDir() string {
+	_, b, _, _ := runtime.Caller(0)
+	d := path.Join(path.Dir(b))
+	return filepath.Dir(d)
 }
