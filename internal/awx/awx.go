@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	model "../model"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
+	"github.com/siw36/awx-judge/internal/model"
 )
 
 var (

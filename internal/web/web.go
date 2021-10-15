@@ -12,18 +12,19 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	guuid "github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
+	log "github.com/sirupsen/logrus"
 
-	awx "../awx"
-	db "../db"
-	internal "../internal"
-	model "../model"
+	"github.com/siw36/awx-judge/internal/awx"
+	"github.com/siw36/awx-judge/internal/db"
+	"github.com/siw36/awx-judge/internal/model"
+	"github.com/siw36/awx-judge/internal/utils"
 )
 
 var Config model.Config
+var Root string = utils.RootDir()
 
 var cookieHandler = securecookie.New(
 	securecookie.GenerateRandomKey(64),
@@ -32,7 +33,7 @@ var cookieHandler = securecookie.New(
 func Serve() {
 	r := mux.NewRouter()
 	// Staic
-	fsStatic := http.FileServer(http.Dir("www/static"))
+	fsStatic := http.FileServer(http.Dir("/var/web/static"))
 	fsLogos := http.FileServer(http.Dir("/tmp"))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fsStatic))
 	r.PathPrefix("/icons/").Handler(http.StripPrefix("/tmp/icons/", fsLogos))
@@ -122,7 +123,7 @@ func goTemplateLayout(templateFile string) (*template.Template, error) {
 	// New template with attached functions
 	name := path.Base(templateFile)
 	t := template.New(name).Funcs(tFuncs)
-	t, err := t.ParseFiles(templateFile, "www/sources.gohtml", "www/header.gohtml", "www/footer.gohtml")
+	t, err := t.ParseFiles(templateFile, "/var/web/sources.gohtml", "/var/web/header.gohtml", "/var/web/footer.gohtml")
 	return t, err
 }
 
@@ -136,7 +137,7 @@ func templateImport(w http.ResponseWriter, r *http.Request) {
 	if !activeSession {
 		return
 	}
-	t, err := goTemplateLayout("www/template-import.gohtml")
+	t, err := goTemplateLayout("/var/web/template-import.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -158,7 +159,7 @@ func templateImportForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render template
-	t, err := goTemplateLayout("www/template-import-form.gohtml")
+	t, err := goTemplateLayout("/var/web/template-import-form.gohtml")
 	if err != nil {
 		log.Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -172,7 +173,7 @@ func templateImportForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else {
-		log.Info("Parsed www/template-import-form.gohtml")
+		log.Info("Parsed /var/web/template-import-form.gohtml")
 	}
 }
 
@@ -188,7 +189,7 @@ func templateImportList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	internal.JsonResponse(w, templates)
+	utils.JsonResponse(w, templates)
 }
 
 func templateImportGet(w http.ResponseWriter, r *http.Request) {
@@ -210,7 +211,7 @@ func templateImportGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	internal.JsonResponse(w, template)
+	utils.JsonResponse(w, template)
 }
 
 func templateImportSurveyGet(w http.ResponseWriter, r *http.Request) {
@@ -232,7 +233,7 @@ func templateImportSurveyGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	internal.JsonResponse(w, survey)
+	utils.JsonResponse(w, survey)
 }
 
 func templateImportAdd(w http.ResponseWriter, r *http.Request) {
@@ -278,9 +279,9 @@ func templateImportAdd(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// Download icon
-	if internal.ValidUrl(template.IconLink) {
+	if utils.ValidUrl(template.IconLink) {
 		log.Info("Downloading icon")
-		err, template.Icon = internal.DownloadIcon(template.ID, template.IconLink)
+		err, template.Icon = utils.DownloadIcon(template.ID, template.IconLink)
 		if err != nil {
 			log.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -317,7 +318,7 @@ func templateList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	internal.JsonResponse(w, templates)
+	utils.JsonResponse(w, templates)
 }
 
 func templateRemove(w http.ResponseWriter, r *http.Request) {
@@ -364,17 +365,17 @@ func templateGet(w http.ResponseWriter, r *http.Request) {
 	template, err := db.GetTemplate(templateQuery.ID)
 	if err != nil {
 		log.Error(err)
-		internal.JsonResponse(w, template)
+		utils.JsonResponse(w, template)
 		return
 	}
-	internal.JsonResponse(w, template)
+	utils.JsonResponse(w, template)
 	return
 }
 
 // // Get all inputs
 // func request(w http.ResponseWriter, r *http.Request) {
 // 	// Show spinner and build the real website asynchonous
-// 	t := template.Must(template.New("request.gohtml").ParseFiles("www/request.gohtml"))
+// 	t := template.Must(template.New("request.gohtml").ParseFiles("/var/web/request.gohtml"))
 // 	if r.Method != http.MethodPost {
 // 		t.Execute(w, nil)
 // 		return
@@ -411,7 +412,7 @@ func shop(w http.ResponseWriter, r *http.Request) {
 
 	// Render template
 	//t := template.New("shop")
-	t, err := goTemplateLayout("www/shop.gohtml")
+	t, err := goTemplateLayout("/var/web/shop.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -422,7 +423,7 @@ func shop(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed www/shop.gohtml")
+		log.Info("Parsed /var/web/shop.gohtml")
 	}
 }
 
@@ -432,7 +433,7 @@ func request(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t, err := goTemplateLayout("www/request.gohtml")
+	t, err := goTemplateLayout("/var/web/request.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -443,7 +444,7 @@ func request(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed www/request.gohtml")
+		log.Info("Parsed /var/web/request.gohtml")
 	}
 }
 
@@ -464,7 +465,7 @@ func requestSpec(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 		return
 	}
-	internal.JsonResponse(w, template)
+	utils.JsonResponse(w, template)
 }
 
 func requestTemplateFormEdit(w http.ResponseWriter, r *http.Request) {
@@ -503,7 +504,7 @@ func requestTemplateFormEdit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render template
-	t, err := goTemplateLayout("www/request-template-form-edit.gohtml")
+	t, err := goTemplateLayout("/var/web/request-template-form-edit.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -514,7 +515,7 @@ func requestTemplateFormEdit(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed www/request-template-form-edit.gohtml")
+		log.Info("Parsed /var/web/request-template-form-edit.gohtml")
 	}
 }
 
@@ -524,7 +525,7 @@ func cart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Render template
-	t, err := goTemplateLayout("www/cart.gohtml")
+	t, err := goTemplateLayout("/var/web/cart.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -534,7 +535,7 @@ func cart(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed www/cart.gohtml")
+		log.Info("Parsed /var/web/cart.gohtml")
 	}
 }
 
@@ -551,7 +552,7 @@ func cartList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	internal.JsonResponse(w, cart)
+	utils.JsonResponse(w, cart)
 }
 
 func cartAdd(w http.ResponseWriter, r *http.Request) {
@@ -739,7 +740,7 @@ func requests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Render template
-	t, err := goTemplateLayout("www/requests.gohtml")
+	t, err := goTemplateLayout("/var/web/requests.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -750,7 +751,7 @@ func requests(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed www/requests.gohtml")
+		log.Info("Parsed /var/web/requests.gohtml")
 	}
 }
 
@@ -810,7 +811,7 @@ func requestsList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	internal.JsonResponse(w, requests)
+	utils.JsonResponse(w, requests)
 }
 
 func requestsGet(w http.ResponseWriter, r *http.Request) {
@@ -827,7 +828,7 @@ func requestsGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	internal.JsonResponse(w, requests)
+	utils.JsonResponse(w, requests)
 }
 
 func requestsApprove(w http.ResponseWriter, r *http.Request) {
@@ -943,7 +944,7 @@ func loginForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render template
-	t, err := goTemplateLayout("www/login.gohtml")
+	t, err := goTemplateLayout("/var/web/login.gohtml")
 	if err != nil {
 		log.Error(err)
 		return
@@ -956,6 +957,6 @@ func loginForm(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error(err)
 	} else {
-		log.Info("Parsed www/login.gohtml")
+		log.Info("Parsed /var/web/login.gohtml")
 	}
 }

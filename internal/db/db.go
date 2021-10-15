@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	model "../model"
+	"github.com/siw36/awx-judge/internal/model"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	guuid "github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
